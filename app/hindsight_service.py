@@ -180,9 +180,11 @@ Constraints: {", ".join(plan.constraints)}
 Proposed actions: {", ".join(plan.proposed_actions)}
 Context: {plan.context}
 
-Use persistent operational memory to identify prior similar situations, recurring needs,
-resource bottlenecks, transport failures, responder coordination patterns, successful actions,
-and exceptions. Do not invent current facts and do not issue autonomous dispatch orders.
+Use persistent operational memory as the evidence base. Identify whether this resembles a prior
+flooding response, especially the North Ward situation, and explicitly connect prior attempted
+road delivery, bridge closure, route inaccessibility, and successful canal/boat tactics when
+those facts are present in memory. Prefer concrete recalled evidence over generic advice.
+Do not invent current facts and do not issue autonomous dispatch orders.
 Return structured decision support with concise evidence and explicit unanswered questions."""
         response = self.client.reflect(
             bank_id=BANK_ID,
