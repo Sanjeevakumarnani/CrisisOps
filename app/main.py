@@ -46,10 +46,8 @@ def startup() -> None:
 
 
 def status_message() -> str:
-    if hindsight_ready():
-        return "Hindsight connected · retain, recall and reflect are available."
-    if os.getenv("HINDSIGHT_BASE_URL"):
-        return "Hindsight configured · connection will be verified on the first memory operation."
+    if os.getenv("HINDSIGHT_BASE_URL") and os.getenv("HINDSIGHT_API_KEY"):
+        return "Hindsight configured · the live memory connection is verified when an operation runs."
     return "Demo fallback · connect Hindsight Cloud for persistent cross-session memory."
 
 
