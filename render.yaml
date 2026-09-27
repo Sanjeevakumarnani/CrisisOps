@@ -1,0 +1,17 @@
+services:
+  - type: web
+    name: crisisops
+    runtime: python
+    plan: free
+    region: singapore
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn app.main:app --host 0.0.0.0 --port $PORT
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.11.9
+      - key: HINDSIGHT_BASE_URL
+        sync: false
+      - key: HINDSIGHT_API_KEY
+        sync: false
+      - key: CRISISOPS_DB_PATH
+        value: /tmp/crisisops.db

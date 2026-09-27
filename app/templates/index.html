@@ -1,0 +1,116 @@
+{% extends "base.html" %}
+{% block content %}
+<main class="shell">
+  <section class="hero-grid">
+    <div class="hero-copy">
+      <div class="kicker">LIVE OPERATIONS · MEMORY ON</div>
+      <h1>A common operational picture that <em>remembers.</em></h1>
+      <p class="hero-lede">CrisisOps turns field reports, urgent needs, scarce resources, responder updates, transport constraints and local conditions into persistent operational memory — then recalls that history before the next response decision.</p>
+      <div class="hero-actions"><a class="cta" href="/demo">Load response exercise</a><a class="ghost" href="#capture">Add field report</a></div>
+      <div class="status-line"><span class="pulse"></span>{{ status }}</div>
+    </div>
+    <div class="command-card">
+      <div class="command-head"><span>OPERATIONAL LOOP</span><span class="mono">CRS-07</span></div>
+      <div class="loop-row"><b>01</b><span>Capture</span><strong>→</strong><span>Field signal</span></div>
+      <div class="loop-row"><b>02</b><span>Retain</span><strong>→</strong><span>Hindsight memory</span></div>
+      <div class="loop-row"><b>03</b><span>Recall</span><strong>→</strong><span>Similar situations</span></div>
+      <div class="loop-row"><b>04</b><span>Reflect</span><strong>→</strong><span>Grounded plan review</span></div>
+    </div>
+  </section>
+
+  <section class="metrics">
+    <article><span>Events in picture</span><strong>{{ stats.events }}</strong><small>time-stamped signals</small></article>
+    <article><span>People affected</span><strong>{{ "{:,}".format(stats.affected_people) }}</strong><small>reported across sites</small></article>
+    <article><span>Open needs</span><strong>{{ stats.open_needs }}</strong><small>unresolved requests</small></article>
+    <article><span>Resource capacity</span><strong>{{ "{:,.0f}".format(stats.resources_available) }}</strong><small>available minus committed</small></article>
+    <article><span>Active responders</span><strong>{{ stats.active_responders }}</strong><small>deployed / en route</small></article>
+    <article class="alert-metric"><span>Route blockers</span><strong>{{ stats.blocked_routes }}</strong><small>closure / cutoff signals</small></article>
+  </section>
+
+  <section class="workbench">
+    <div class="map-pane card">
+      <div class="pane-head"><div><span class="label">COMMON OPERATIONAL PICTURE</span><h2>Situation map</h2></div><span class="map-chip">{{ events|length }} signals</span></div>
+      <div class="map-shell" id="ops-map">
+        <div class="map-grid"></div>
+        <div class="river"></div>
+        <div class="map-label l1">NORTH WARD</div><div class="map-label l2">MARKET ZONE</div><div class="map-label l3">EAST BYPASS</div>
+        {% for e in events %}
+        <button class="pin pin-{{ e.urgency }}" data-event="{{ e.id }}" title="{{ e.title }}" style="left:{{ 8 + ((e.lon-78.31)/0.18)*84 }}%;top:{{ 12 + ((17.51-e.lat)/0.17)*74 }}%;">
+          <span></span><b>{{ loop.index }}</b>
+        </button>
+        {% endfor %}
+        <div class="map-scale">0 —— 5 km —— 10 km</div>
+      </div>
+      <div class="legend"><span><i class="dot critical"></i>Critical</span><span><i class="dot high"></i>High</span><span><i class="dot medium"></i>Medium</span><span><i class="dot low"></i>Low</span></div>
+    </div>
+
+    <aside class="side-pane card">
+      <div class="pane-head"><div><span class="label">FIELD STREAM</span><h2>Latest signals</h2></div><span class="live-dot">LIVE</span></div>
+      <div class="signal-list">
+      {% for e in events[:9] %}
+        <article class="signal" id="event-{{ e.id }}" data-search="{{ e.title }} {{ e.location }} {{ e.sector }} {{ e.details }}">
+          <div class="signal-top"><span class="signal-kind">{{ e.kind|replace("_"," ") }}</span><span class="urgency {{ e.urgency }}">{{ e.urgency }}</span></div>
+          <h3>{{ e.title }}</h3><p>{{ e.location }} · {{ e.occurred_at.strftime("%d %b %H:%M") }}</p>
+          <div class="signal-foot"><span>{{ e.affected_people }} people</span><span>{{ e.sector }}</span><span>{{ e.status }}</span></div>
+        </article>
+      {% else %}<div class="empty">Load the exercise to populate the common picture.</div>{% endfor %}
+      </div>
+    </aside>
+  </section>
+
+  <section class="memory-banner card">
+    <div><span class="label">PERSISTENT MEMORY</span><h2>The response learns from yesterday.</h2><p>Hindsight is used as the operational memory layer, not a decorative chatbot. The demo makes memory visible through retained field history, recalled matches, and reflected plan reviews.</p></div>
+    <div class="memory-stats"><div><span>RETAIN</span><b>field truth</b></div><div><span>RECALL</span><b>similar moments</b></div><div><span>REFLECT</span><b>grounded synthesis</b></div></div>
+  </section>
+
+  <section class="two-col">
+    <div class="card" id="capture">
+      <div class="pane-head"><div><span class="label">INPUT</span><h2>Capture a field report</h2></div></div>
+      <form method="post" action="/events" class="form-grid">
+        <input name="title" placeholder="e.g. North Ward shelter reaches 80% capacity" required>
+        <input name="location" placeholder="Location / sector" required>
+        <input name="lat" value="17.45" type="hidden"><input name="lon" value="78.40" type="hidden">
+        <select name="kind"><option>situation</option><option>need</option><option>resource</option><option>responder_update</option><option>transport</option><option>condition</option><option>action</option><option>decision</option></select>
+        <select name="urgency"><option>critical</option><option selected>high</option><option>medium</option><option>low</option></select>
+        <input name="affected_people" type="number" value="0" min="0" placeholder="People affected">
+        <input name="sector" value="shelter" placeholder="Sector">
+        <textarea name="details" placeholder="What is happening? What changed?"></textarea>
+        <input name="needs_json" value='[{"category":"water","priority":"high","quantity":200,"unit":"kits","status":"open","notes":""}]'>
+        <input name="resources_json" value='[]'>
+        <input name="responders_json" value='[]'>
+        <input name="transport_constraints" placeholder="Bridge closed | route waterlogged">
+        <input name="operational_conditions" placeholder="Network intermittent | water rising">
+        <input name="attempted_actions" placeholder="Road delivery blocked at 18:20">
+        <input name="outcome" placeholder="Outcome / lesson">
+        <button class="cta full" type="submit">Retain field memory</button>
+      </form>
+    </div>
+
+    <div class="card plan-card">
+      <div class="pane-head"><div><span class="label">DECISION SUPPORT</span><h2>Review a response plan</h2></div><span class="memory-pill">HINDSIGHT</span></div>
+      <p class="hint">Ask: “Does this resemble anything we've already experienced?”</p>
+      <form method="post" action="/analyze" class="form-grid">
+        <textarea name="objective" required placeholder="Objective: move 600 shelter kits to North Ward before nightfall"></textarea>
+        <input name="locations" placeholder="North Ward | Market Zone">
+        <input name="resources" placeholder="2 boats | 1 truck | shelter kits">
+        <input name="transport_plan" placeholder="Use canal route, then transfer at Depot 2">
+        <input name="constraints" placeholder="Bridge 4 closed | network intermittent">
+        <input name="proposed_actions" placeholder="Stage boats | preload kits | confirm local coordinator">
+        <textarea name="context" placeholder="Latest field context, timing, who is on scene"></textarea>
+        <button class="cta danger full" type="submit">Recall history + review plan</button>
+      </form>
+      <div class="before-after"><div><span>WITHOUT MEMORY</span><p>“Assess needs, check routes, allocate resources.”</p></div><div><span>WITH MEMORY</span><p>Historical evidence can surface prior route failures, resource shortages and tactics that worked under similar conditions.</p></div></div>
+    </div>
+  </section>
+
+  <section class="card timeline-card">
+    <div class="pane-head"><div><span class="label">LIVING MEMORY</span><h2>From signal → lesson</h2></div><button class="ghost" onclick="loadMemory()">Refresh memory lenses</button></div>
+    <div class="memory-grid" id="memory-grid"><div class="memory-lens"><span>WHAT KEEPS BREAKING</span><p>Waiting for memory synthesis…</p></div><div class="memory-lens"><span>WHAT ACTUALLY WORKED</span><p>Waiting for memory synthesis…</p></div><div class="memory-lens"><span>WHERE CAPACITY IS FRAGILE</span><p>Waiting for memory synthesis…</p></div><div class="memory-lens"><span>INSTITUTIONAL MEMORY</span><p>Waiting for memory synthesis…</p></div></div>
+  </section>
+</main>
+<script>
+async function loadMemory(){const grid=document.getElementById('memory-grid');const r=await fetch('/api/memory');const d=await r.json();if(!d.live){grid.innerHTML=Object.keys({a:1,b:1,c:1,d:1}).map((_,i)=>'<div class="memory-lens"><span>MEMORY OFFLINE</span><p>'+escapeHtml(d.error||'Connect Hindsight to synthesize cross-event memory.')+'</p></div>').join('');return;}grid.innerHTML=Object.entries(d.lenses).map(([k,v])=>'<div class="memory-lens"><span>'+escapeHtml(k).toUpperCase()+'</span><p>'+escapeHtml(v)+'</p></div>').join('')}
+function escapeHtml(s){return String(s||'').replace(/[&<>'"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c]))}
+document.querySelectorAll('.pin').forEach(p=>p.addEventListener('click',()=>{const e=document.getElementById('event-'+p.dataset.event);if(e){e.scrollIntoView({behavior:'smooth',block:'center'});e.classList.add('focus');setTimeout(()=>e.classList.remove('focus'),1200)}})); loadMemory();
+</script>
+{% endblock %}

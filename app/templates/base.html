@@ -1,0 +1,19 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="theme-color" content="#08110f">
+  <title>{{ title or "CrisisOps" }}</title>
+  <link rel="stylesheet" href="/static/styles.css">
+</head>
+<body>
+<header class="topnav">
+  <a class="brand" href="/"><span class="brand-mark">✦</span> CrisisOps</a>
+  <div class="nav-sub">Disaster Response Memory Engine</div>
+  <nav><a href="/">Common Picture</a><a href="/analysis">Memory Review</a><a href="/health">Health</a></nav>
+</header>
+{% block content %}{% endblock %}
+<footer class="footer">Decision support for human responders · synthetic demo data · never an autonomous dispatch system</footer>
+</body>
+</html>
