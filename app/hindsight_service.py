@@ -97,7 +97,12 @@ class CrisisMemory:
 
     def recall(self, plan: ResponsePlanInput, limit: int = 8) -> list[dict[str, Any]]:
         self.ensure_bank()
-        query = f"""Find operational memories relevant to this proposed disaster-response plan.
+        query = f"""Find the most relevant prior disaster-response experiences for this plan.
+Prioritize exact operational similarities in location, hazard, route constraints, attempted actions,
+resource choices, and outcomes. Surface relevant memories when they mention flooding, North Ward,
+bridge closure, road-delivery failure, inaccessible routes, boats, or canal routes.
+
+Current plan:
 Objective: {plan.objective}
 Locations: {", ".join(plan.locations)}
 Resources: {", ".join(plan.resources)}
