@@ -156,7 +156,7 @@ async function loadAnalysisHistory(){const el=document.getElementById("analysis-
 <script>
 async function loadMemory(){const grid=document.getElementById('memory-grid');const r=await fetch('/api/memory');const d=await r.json();if(!d.live){grid.innerHTML=Object.keys({a:1,b:1,c:1,d:1}).map((_,i)=>'<div class="memory-lens"><span>MEMORY OFFLINE</span><p>'+escapeHtml(d.error||'Connect Hindsight to synthesize cross-event memory.')+'</p></div>').join('');return;}grid.innerHTML=Object.entries(d.lenses).map(([k,v])=>'<div class="memory-lens"><span>'+escapeHtml(k).toUpperCase()+'</span><p>'+escapeHtml(v)+'</p></div>').join('')}
 function escapeHtml(s){return String(s||'').replace(/[&<>'"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c]))}
-document.querySelectorAll('.pin').forEach(p=>p.addEventListener('click',()=>{const e=document.getElementById('event-'+p.dataset.event);if(e){e.scrollIntoView({behavior:'smooth',block:'center'});e.classList.add('focus');setTimeout(()=>e.classList.remove('focus'),1200)}})); loadMemory();loadAnalysisHistory();
+document.querySelectorAll('.pin').forEach(p=>p.addEventListener('click',()=>{const e=document.getElementById('event-'+p.dataset.event);if(e){e.scrollIntoView({behavior:'smooth',block:'center'});e.classList.add('focus');setTimeout(()=>e.classList.remove('focus'),1200)}})); loadAnalysisHistory();
 </script>
 <script>
 async function loadLiveData(){
