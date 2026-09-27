@@ -74,7 +74,7 @@ class CrisisMemory:
         except Exception:
             pass
 
-    def retain(self, event: OperationalEvent) -> None:
+    def retain(self, event: OperationalEvent) -> str:
         self.ensure_bank()
         source_type = "synthetic" if event.source_type == "synthetic" else "operator"
         tags = [
