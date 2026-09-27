@@ -11,3 +11,10 @@ def test_event_model():
 def test_plan_model():
     p=ResponsePlanInput(objective='Reach shelter',locations=['Demo'])
     assert p.locations == ['Demo']
+
+
+def test_source_type_defaults_to_operator_and_supports_synthetic():
+    operator = OperationalEventCreate(title='Operator report', location='Demo', lat=17.4, lon=78.4)
+    synthetic = OperationalEventCreate(title='Demo report', location='Demo', lat=17.4, lon=78.4, source_type='synthetic')
+    assert operator.source_type == 'operator'
+    assert synthetic.source_type == 'synthetic'
