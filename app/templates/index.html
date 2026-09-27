@@ -36,7 +36,7 @@
   <section class="live-intel card">
     <div class="pane-head">
       <div><span class="label">REAL-TIME PUBLIC INTELLIGENCE</span><h2>Live hazard picture</h2></div>
-      <div class="live-controls"><span id="live-updated" class="live-stamp">Loading...</span><button class="ghost" onclick="loadLiveData()">Refresh</button></div>
+      <div class="live-controls"><span id="live-updated" class="live-stamp">Loading...</span><button class="ghost" onclick="loadLiveData()">Refresh</button><button class="cta" onclick="retainLiveData()">Retain in Hindsight</button></div>
     </div>
     <div class="live-grid">
       <article class="live-weather">
@@ -173,5 +173,11 @@ async function loadLiveData(){
 }
 function esc(s){return String(s??'').replace(/[&<>'"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c]))}
 function escAttr(s){return esc(s)}
+async function retainLiveData(){
+  const button=document.querySelector('.live-controls .cta'); button.disabled=true; button.textContent='Saving...';
+  try{const r=await fetch('/api/live-data/retain?lat=17.385&lon=78.4867',{method:'POST'}); const d=await r.json(); button.textContent=d.ok?'Memory saved':'Memory unavailable';}
+  catch(e){button.textContent='Memory unavailable'}
+  setTimeout(()=>{button.disabled=false;button.textContent='Retain in Hindsight'},2500);
+}
 loadLiveData();
 </script>{% endblock %}
