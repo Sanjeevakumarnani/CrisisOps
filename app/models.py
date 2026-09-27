@@ -11,6 +11,7 @@ EventKind = Literal[
 ]
 Urgency = Literal["critical", "high", "medium", "low"]
 EventStatus = Literal["open", "active", "resolved", "monitoring", "blocked", "unknown"]
+SourceType = Literal["operator", "synthetic"]
 
 
 class Need(BaseModel):
@@ -59,6 +60,7 @@ class OperationalEventCreate(BaseModel):
     attempted_actions: list[str] = Field(default_factory=list)
     outcome: str = ""
     source: str = "field-report"
+    source_type: SourceType = "operator"
     occurred_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
 
 
