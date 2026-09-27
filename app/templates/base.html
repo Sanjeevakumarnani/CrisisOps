@@ -3,17 +3,22 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
-  <meta name="theme-color" content="#08110f">
+  <meta name="theme-color" content="#eef1e8">
   <title>{{ title or "CrisisOps" }}</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@500;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="/static/styles.css">
 </head>
 <body>
+<div class="site-frame">
 <header class="topnav">
-  <a class="brand" href="/"><span class="brand-mark">✦</span> CrisisOps</a>
-  <div class="nav-sub">Disaster Response Memory Engine</div>
-  <nav><a href="/">Common Picture</a><a href="/analysis">Memory Review</a><a href="/health">Health</a></nav>
+  <a class="brand" href="/"><span class="brand-mark">◉</span><span>CRISIS<span>OPS</span></span></a>
+  <div class="nav-sub">DISASTER RESPONSE MEMORY ENGINE</div>
+  <nav><a href="/">Common Picture</a><a href="/analysis">Memory Review</a><a href="/health">Health</a><a class="nav-cta" href="/demo">Load Demo</a></nav>
 </header>
 {% block content %}{% endblock %}
 <footer class="footer">Decision support for human responders · synthetic demo data · never an autonomous dispatch system</footer>
+</div>
 </body>
 </html>
