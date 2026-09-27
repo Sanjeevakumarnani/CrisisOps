@@ -33,6 +33,34 @@
     <article class="alert-metric"><span>Route blockers</span><strong>{{ stats.blocked_routes }}</strong><small>closure / cutoff signals</small></article>
   </section>
 
+  <section class="live-intel card">
+    <div class="pane-head">
+      <div><span class="label">REAL-TIME PUBLIC INTELLIGENCE</span><h2>Live hazard picture</h2></div>
+      <div class="live-controls"><span id="live-updated" class="live-stamp">Loading...</span><button class="ghost" onclick="loadLiveData()">Refresh</button></div>
+    </div>
+    <div class="live-grid">
+      <article class="live-weather">
+        <span class="live-source">WEATHER · OPEN-METEO</span>
+        <div class="weather-main"><strong id="live-temp">—</strong><span>°C</span></div>
+        <div id="live-weather-summary" class="weather-summary">Loading current conditions...</div>
+        <div class="weather-facts"><span>Humidity <b id="live-humidity">—</b></span><span>Wind <b id="live-wind">—</b></span><span>Gust <b id="live-gust">—</b></span><span>Rain <b id="live-rain">—</b></span></div>
+      </article>
+      <article>
+        <div class="live-source">INDIA METEOROLOGICAL DEPARTMENT · CAP</div>
+        <div id="imd-alerts" class="live-list"><p class="muted">Loading official alerts...</p></div>
+      </article>
+      <article>
+        <div class="live-source">USGS · EARTHQUAKES PAST DAY</div>
+        <div id="quake-list" class="live-list"><p class="muted">Loading seismic feed...</p></div>
+      </article>
+      <article>
+        <div class="live-source">GDACS · GLOBAL DISASTER ALERTS</div>
+        <div id="gdacs-list" class="live-list"><p class="muted">Loading global alerts...</p></div>
+      </article>
+    </div>
+    <div class="live-disclaimer">Public-feed data is live external intelligence, not a substitute for verified field reports. CrisisOps keeps source, timestamp and uncertainty visible.</div>
+  </section>
+
   <section class="workbench">
     <div class="map-pane card">
       <div class="pane-head"><div><span class="label">COMMON OPERATIONAL PICTURE</span><h2>Situation map</h2></div><span class="map-chip">{{ events|length }} signals</span></div>
@@ -119,4 +147,31 @@ async function loadMemory(){const grid=document.getElementById('memory-grid');co
 function escapeHtml(s){return String(s||'').replace(/[&<>'"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c]))}
 document.querySelectorAll('.pin').forEach(p=>p.addEventListener('click',()=>{const e=document.getElementById('event-'+p.dataset.event);if(e){e.scrollIntoView({behavior:'smooth',block:'center'});e.classList.add('focus');setTimeout(()=>e.classList.remove('focus'),1200)}})); loadMemory();
 </script>
-{% endblock %}
+<script>
+async function loadLiveData(){
+  try{
+    const r=await fetch('/api/live-data?lat=17.385&lon=78.4867',{cache:'no-store'});
+    const d=await r.json();
+    document.getElementById('live-updated').textContent='Updated '+new Date(d.generated_at).toLocaleTimeString();
+    const w=d.weather||{};
+    document.getElementById('live-temp').textContent=w.temperature_c??'—';
+    document.getElementById('live-humidity').textContent=(w.humidity_pct??'—')+'%';
+    document.getElementById('live-wind').textContent=(w.wind_kmh??'—')+' km/h';
+    document.getElementById('live-gust').textContent=(w.gust_kmh??'—')+' km/h';
+    document.getElementById('live-rain').textContent=(w.precipitation_mm??'—')+' mm';
+    document.getElementById('live-weather-summary').textContent='Current model condition · '+(w.observed_at||'timestamp unavailable')+' · '+(w.location?.timezone||'local time');
+    const alerts=d.imd_alerts||[];
+    document.getElementById('imd-alerts').innerHTML=alerts.length?alerts.slice(0,5).map(a=>'<a class="live-item" target="_blank" rel="noreferrer" href="'+escAttr(a.link)+'"><b>'+esc(a.title||'IMD alert')+'</b><small>'+esc(a.published||'')+'</small></a>').join(''):'<p class="muted">No CAP items returned.</p>';
+    const quakes=d.earthquakes||[];
+    document.getElementById('quake-list').innerHTML=quakes.length?quakes.slice(0,5).map(q=>'<a class="live-item" target="_blank" rel="noreferrer" href="'+escAttr(q.url)+'"><b>M '+esc(q.magnitude)+' · '+esc(q.place)+'</b><small>'+esc(q.distance_km)+' km from selected location · '+esc(q.time)+'</small></a>').join(''):'<p class="muted">No matching earthquakes in the selected radius.</p>';
+    const gd=d.gdacs_events||[];
+    document.getElementById('gdacs-list').innerHTML=gd.length?gd.slice(0,5).map(x=>'<div class="live-item"><b>'+esc(x.alert_level||'Alert')+' · '+esc(x.name||x.event_type||'Disaster event')+'</b><small>'+esc(x.country||'Global')+'</small></div>').join(''):'<p class="muted">No GDACS events returned for the current window.</p>';
+  }catch(e){
+    document.getElementById('live-updated').textContent='Feed unavailable';
+    document.getElementById('imd-alerts').innerHTML='<p class="muted">Live feeds unavailable: '+esc(e.message)+'</p>';
+  }
+}
+function esc(s){return String(s??'').replace(/[&<>'"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c]))}
+function escAttr(s){return esc(s)}
+loadLiveData();
+</script>{% endblock %}
