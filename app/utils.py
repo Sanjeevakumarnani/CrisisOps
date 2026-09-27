@@ -55,6 +55,7 @@ Local operational conditions: {", ".join(event.operational_conditions) or "none"
 Attempted actions: {", ".join(event.attempted_actions) or "none"}
 Outcome: {event.outcome or "not recorded"}
 Source: {event.source}
+Source type: {event.source_type}
 """.strip()
 
 
