@@ -160,12 +160,54 @@ def dashboard_stats() -> DashboardStats:
     )
 
 
+def store_live_intel(provider: str, payload: dict[str, Any], fetched_at: str, retained_to_hindsight: bool = False, hindsight_memory_id: str | None = None) -> None:
+    with get_conn() as conn:
+        conn.execute(
+            "INSERT INTO live_intel(provider,payload,fetched_at,retained_to_hindsight,hindsight_memory_id) VALUES(?,?,?,?,?)",
+            (provider, json.dumps(payload), fetched_at, int(retained_to_hindsight), hindsight_memory_id),
+        )
+
+
+def list_live_intel(limit: int = 50) -> list[dict[str, Any]]:
+    with get_conn() as conn:
+        rows = conn.execute(
+            "SELECT * FROM live_intel ORDER BY id DESC LIMIT ?", (limit,)
+        ).fetchall()
+    return [
+        {
+            "id": row["id"],
+            "provider": row["provider"],
+            "payload": json.loads(row["payload"]),
+            "fetched_at": row["fetched_at"],
+            "retained_to_hindsight": bool(row["retained_to_hindsight"]),
+            "hindsight_memory_id": row["hindsight_memory_id"],
+        }
+        for row in rows
+    ]
+
+
 def store_analysis(payload: dict[str, Any], result: dict[str, Any]) -> None:
     with get_conn() as conn:
         conn.execute(
             "INSERT INTO analyses(input_json,output_json,created_at) VALUES(?,?,?)",
             (json.dumps(payload), json.dumps(result), datetime.now(timezone.utc).isoformat()),
         )
+
+
+def list_analyses(limit: int = 20) -> list[dict[str, Any]]:
+    with get_conn() as conn:
+        rows = conn.execute(
+            "SELECT * FROM analyses ORDER BY id DESC LIMIT ?", (limit,)
+        ).fetchall()
+    return [
+        {
+            "id": row["id"],
+            "input": json.loads(row["input_json"]),
+            **json.loads(row["output_json"]),
+            "created_at": row["created_at"],
+        }
+        for row in rows
+    ]
 
 
 def latest_analysis() -> dict[str, Any] | None:
