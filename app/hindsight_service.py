@@ -95,6 +95,42 @@ class CrisisMemory:
         )
         return f"crisis-event-{event.id}"
 
+
+    def retain_live_snapshot(self, snapshot: dict[str, Any]) -> int:
+        """Retain a user-approved public-intelligence snapshot in Hindsight."""
+        self.ensure_bank()
+        retained = 0
+        location = snapshot.get("location", {})
+        generated_at = snapshot.get("generated_at")
+        providers = [
+            ("open-meteo", snapshot.get("weather")),
+            ("usgs", snapshot.get("earthquakes")),
+            ("imd-cap", snapshot.get("imd_alerts")),
+            ("gdacs", snapshot.get("gdacs_events")),
+        ]
+        for provider, payload in providers:
+            if payload in (None, [], {}):
+                continue
+            items = payload if isinstance(payload, list) else [payload]
+            for idx, item in enumerate(items):
+                stable = f"live-{provider}-{location.get('latitude')}-{location.get('longitude')}-{generated_at}-{idx}"
+                content = f"REAL public intelligence from {provider}. Retrieved at {generated_at}. Location {location}. Signal: {item}"
+                self.client.retain(
+                    bank_id=BANK_ID,
+                    content=content,
+                    context="real public disaster-response intelligence; not verified field status",
+                    timestamp=generated_at,
+                    document_id=stable,
+                    tags=["source_type:real", f"provider:{provider}"],
+                    metadata={
+                        "source_type": "real",
+                        "provider": provider,
+                        "retrieved_at": generated_at,
+                        "location": location,
+                    },
+                )
+                retained += 1
+        return retained
     def recall(self, plan: ResponsePlanInput, limit: int = 8) -> list[dict[str, Any]]:
         self.ensure_bank()
         query = f"""Find the most relevant prior disaster-response experiences for this plan.
