@@ -76,11 +76,13 @@ class CrisisMemory:
 
     def retain(self, event: OperationalEvent) -> None:
         self.ensure_bank()
+        source_type = "synthetic" if event.source_type == "synthetic" else "operator"
         tags = [
             f"kind:{event.kind}",
             f"urgency:{event.urgency}",
             f"status:{event.status}",
             f"sector:{event.sector.lower().replace(' ', '-')}",
+            f"source_type:{source_type}",
         ]
         self.client.retain(
             bank_id=BANK_ID,
@@ -89,8 +91,9 @@ class CrisisMemory:
             timestamp=event.occurred_at,
             document_id=f"crisis-event-{event.id}",
             tags=tags,
-            metadata={"location": event.location, "event_id": str(event.id)},
+            metadata={"location": event.location, "event_id": str(event.id), "source_type": source_type, "source": event.source},
         )
+        return f"crisis-event-{event.id}"
 
     def recall(self, plan: ResponsePlanInput, limit: int = 8) -> list[dict[str, Any]]:
         self.ensure_bank()
