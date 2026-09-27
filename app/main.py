@@ -246,6 +246,16 @@ def api_live_data(lat: float = DEFAULT_LAT, lon: float = DEFAULT_LON):
     return get_live_data(lat, lon)
 
 
+@app.post("/api/live-data/retain")
+def retain_live_data(lat: float = DEFAULT_LAT, lon: float = DEFAULT_LON):
+    snapshot = get_live_data(lat, lon)
+    try:
+        count = CrisisMemory().retain_live_snapshot(snapshot)
+        return {"ok": True, "retained": count}
+    except Exception as exc:
+        return JSONResponse(status_code=503, content={"ok": False, "error": str(exc)})
+
+
 @app.get("/api/dashboard")
 def api_dashboard():
     return {"stats": dashboard_stats().model_dump(), "status": status_message()}
