@@ -21,6 +21,7 @@ from .db import (
     store_analysis,
 )
 from .hindsight_service import CrisisMemory, HindsightUnavailable, hindsight_ready
+from .live_data import DEFAULT_LAT, DEFAULT_LON, get_live_data
 from .models import (
     Need,
     OperationalEventCreate,
@@ -237,6 +238,12 @@ def analyze_response(
         "memory_live": live,
     })
     return RedirectResponse(url="/analysis?ready=1", status_code=303)
+
+
+@app.get("/api/live-data")
+def api_live_data(lat: float = DEFAULT_LAT, lon: float = DEFAULT_LON):
+    """Live public hazard/weather feeds; never presented as verified field status."""
+    return get_live_data(lat, lon)
 
 
 @app.get("/api/dashboard")
