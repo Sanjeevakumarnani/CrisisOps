@@ -22,6 +22,7 @@ from .db import (
     list_analyses,
     list_events,
     store_analysis,
+    store_live_intel,
 )
 from .hindsight_service import CrisisMemory, hindsight_ready
 from .live_data import DEFAULT_LAT, DEFAULT_LON, get_live_data
@@ -320,6 +321,14 @@ def retain_live_data(lat: float = DEFAULT_LAT, lon: float = DEFAULT_LON):
     snapshot = get_live_data(lat, lon)
     try:
         count = CrisisMemory().retain_live_snapshot(snapshot)
+        for provider, payload in [
+            ("open-meteo", snapshot.get("weather")),
+            ("usgs", snapshot.get("earthquakes")),
+            ("imd-cap", snapshot.get("imd_alerts")),
+            ("gdacs", snapshot.get("gdacs_events")),
+        ]:
+            if payload not in (None, [], {}):
+                store_live_intel(provider, payload, snapshot.get("generated_at", ""), True)
         return {"ok": True, "retained": count, "source_type": "REAL"}
     except Exception as exc:
         return JSONResponse(status_code=503, content={"ok": False, "source_type": "REAL", "error": str(exc)})
