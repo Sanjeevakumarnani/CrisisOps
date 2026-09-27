@@ -50,6 +50,7 @@ def init_db() -> None:
             attempted_actions_json TEXT NOT NULL,
             outcome TEXT NOT NULL,
             source TEXT NOT NULL,
+            source_type TEXT NOT NULL DEFAULT 'operator',
             occurred_at TEXT NOT NULL,
             created_at TEXT NOT NULL
         );
@@ -59,7 +60,18 @@ def init_db() -> None:
             output_json TEXT NOT NULL,
             created_at TEXT NOT NULL
         );
+        CREATE TABLE IF NOT EXISTS live_intel (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            provider TEXT NOT NULL,
+            payload TEXT NOT NULL,
+            fetched_at TEXT NOT NULL,
+            retained_to_hindsight INTEGER NOT NULL DEFAULT 0,
+            hindsight_memory_id TEXT
+        );
         """)
+        columns = {row[1] for row in conn.execute("PRAGMA table_info(events)").fetchall()}
+        if "source_type" not in columns:
+            conn.execute("ALTER TABLE events ADD COLUMN source_type TEXT NOT NULL DEFAULT 'operator'")
 
 
 def create_event(data: OperationalEventCreate) -> OperationalEvent:
@@ -69,8 +81,8 @@ def create_event(data: OperationalEventCreate) -> OperationalEvent:
             """INSERT INTO events
             (kind,title,location,lat,lon,urgency,status,affected_people,sector,details,
              needs_json,resources_json,responders_json,transport_json,conditions_json,
-             attempted_actions_json,outcome,source,occurred_at,created_at)
-            VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""",
+             attempted_actions_json,outcome,source,source_type,occurred_at,created_at)
+            VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""",
             (
                 data.kind, data.title, data.location, data.lat, data.lon, data.urgency,
                 data.status, data.affected_people, data.sector, data.details,
@@ -80,7 +92,7 @@ def create_event(data: OperationalEventCreate) -> OperationalEvent:
                 json.dumps(data.transport_constraints),
                 json.dumps(data.operational_conditions),
                 json.dumps(data.attempted_actions),
-                data.outcome, data.source, data.occurred_at.isoformat(), now.isoformat(),
+                data.outcome, data.source, data.source_type, data.occurred_at.isoformat(), now.isoformat(),
             ),
         )
         event_id = int(cur.lastrowid)
@@ -98,7 +110,7 @@ def row_to_event(row: sqlite3.Row) -> OperationalEvent:
         transport_constraints=json.loads(row["transport_json"]),
         operational_conditions=json.loads(row["conditions_json"]),
         attempted_actions=json.loads(row["attempted_actions_json"]),
-        outcome=row["outcome"], source=row["source"],
+        outcome=row["outcome"], source=row["source"], source_type=row["source_type"],
         occurred_at=datetime.fromisoformat(row["occurred_at"]),
         created_at=datetime.fromisoformat(row["created_at"]),
     )
