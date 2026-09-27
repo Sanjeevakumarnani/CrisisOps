@@ -65,3 +65,27 @@ No autonomous dispatch or emergency action is performed.
 The project uses public programmatic feeds where available. IMD documents that its warning ecosystem uses Common Alert Protocol and APIs, and NDMA's SACHET portal provides geo-targeted disaster alerts and an RSS feed. USGS publishes machine-readable real-time earthquake feeds. Open-Meteo provides continuously updated forecast/current-weather data from multiple national weather models. GDACS provides a public API for disaster-event data.
 
 For production agency deployment, authorized agency feeds (for example an organization's authenticated IMD/NDMA/CWC/SACHET integration) should be configured rather than treating public aggregators as authoritative field status.
+
+## How this uses Hindsight
+
+CrisisOps uses one Hindsight memory bank, `crisisops-disaster-response-memory`, as its cross-incident semantic memory. A field report is **Retained** with its needs, resources, route constraints, attempted action, outcome, provenance and source type. When an operator submits a new response plan, the plan is sent to **Recall** so relevant prior incidents and observations can be surfaced. The result is then sent to **Reflect**, which produces structured decision support: recurring patterns, transport constraints, resource conflicts, evidence, recommended human checks and unanswered questions. The operator makes the final decision and can record the outcome, which becomes future memory. Live public-intelligence snapshots can also be explicitly retained.
+
+### Provenance is part of the product
+
+Every displayed data point belongs to one of three categories:
+
+- **REAL** — read-only information retrieved from public feeds such as Open-Meteo, USGS, IMD CAP and GDACS.
+- **OPERATOR INPUT** — information a human responder entered into CrisisOps.
+- **SYNTHETIC** — deterministic demo/seed records used for the judging walkthrough.
+
+Hindsight analyses are labelled **HINDSIGHT SYNTHESIS**; their underlying memories preserve the source type. A local similarity fallback is labelled **LOCAL DEMO FALLBACK** and is never presented as live Hindsight memory.
+
+### Before / after demo
+
+Use `POST /api/demo/seed` to load the canonical synthetic Incident A and Incident B. Incident A is retained; Incident B is deliberately left as the recall target. Then use `POST /api/demo/verify-loop` to execute Retain → Recall → Reflect and return a structured trace. The dashboard also exposes a side-by-side **Without memory / With memory** review and an analysis-history timeline.
+
+For the optional memory-free LLM baseline, set `GROQ_API_KEY`. Without it, CrisisOps uses a deterministic memory-free baseline so the comparison remains available without introducing an unconfigured external dependency.
+
+### Demo honesty
+
+The canonical incidents are synthetic. They are not represented as real victims or live agency reports. Public-feed values are shown with source and retrieval time, and operator-entered data stays distinct from those feeds.
