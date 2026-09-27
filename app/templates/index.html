@@ -40,21 +40,21 @@
     </div>
     <div class="live-grid">
       <article class="live-weather">
-        <span class="live-source">WEATHER · OPEN-METEO</span>
+        <div class="live-source-row"><span class="live-source">WEATHER · OPEN-METEO</span><span class="source-badge real">REAL</span></div>
         <div class="weather-main"><strong id="live-temp">—</strong><span>°C</span></div>
         <div id="live-weather-summary" class="weather-summary">Loading current conditions...</div>
         <div class="weather-facts"><span>Humidity <b id="live-humidity">—</b></span><span>Wind <b id="live-wind">—</b></span><span>Gust <b id="live-gust">—</b></span><span>Rain <b id="live-rain">—</b></span></div>
       </article>
       <article>
-        <div class="live-source">INDIA METEOROLOGICAL DEPARTMENT · CAP</div>
+        <div class="live-source-row"><span class="live-source">INDIA METEOROLOGICAL DEPARTMENT · CAP</span><span class="source-badge real">REAL</span></div>
         <div id="imd-alerts" class="live-list"><p class="muted">Loading official alerts...</p></div>
       </article>
       <article>
-        <div class="live-source">USGS · EARTHQUAKES PAST DAY</div>
+        <div class="live-source-row"><span class="live-source">USGS · EARTHQUAKES PAST DAY</span><span class="source-badge real">REAL</span></div>
         <div id="quake-list" class="live-list"><p class="muted">Loading seismic feed...</p></div>
       </article>
       <article>
-        <div class="live-source">GDACS · GLOBAL DISASTER ALERTS</div>
+        <div class="live-source-row"><span class="live-source">GDACS · GLOBAL DISASTER ALERTS</span><span class="source-badge real">REAL</span></div>
         <div id="gdacs-list" class="live-list"><p class="muted">Loading global alerts...</p></div>
       </article>
     </div>
@@ -83,7 +83,7 @@
       <div class="signal-list">
       {% for e in events[:9] %}
         <article class="signal" id="event-{{ e.id }}" data-search="{{ e.title }} {{ e.location }} {{ e.sector }} {{ e.details }}">
-          <div class="signal-top"><span class="signal-kind">{{ e.kind|replace("_"," ") }}</span><span class="urgency {{ e.urgency }}">{{ e.urgency }}</span></div>
+          <div class="signal-top"><span class="signal-kind">{{ e.kind|replace("_"," ") }}</span><span class="source-badge {{ "synthetic" if e.source_type == "synthetic" else "operator" }}">{{ "SYNTHETIC" if e.source_type == "synthetic" else "OPERATOR INPUT" }}</span><span class="urgency {{ e.urgency }}">{{ e.urgency }}</span></div>
           <h3>{{ e.title }}</h3><p>{{ e.location }} · {{ e.occurred_at.strftime("%d %b %H:%M") }}</p>
           <div class="signal-foot"><span>{{ e.affected_people }} people</span><span>{{ e.sector }}</span><span>{{ e.status }}</span></div>
         </article>
