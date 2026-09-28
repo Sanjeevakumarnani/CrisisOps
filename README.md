@@ -84,7 +84,7 @@ Hindsight analyses are labelled **HINDSIGHT SYNTHESIS**; their underlying memori
 
 Use `POST /api/demo/seed` to load the canonical synthetic Incident A and Incident B. Incident A is retained; Incident B is deliberately left as the recall target. Then use `POST /api/demo/verify-loop` to execute Retain → Recall → Reflect and return a structured trace. The dashboard also exposes a side-by-side **Without memory / With memory** review and an analysis-history timeline.
 
-For the optional memory-free LLM baseline, set `GROQ_API_KEY`. Without it, CrisisOps uses a deterministic memory-free baseline so the comparison remains available without introducing an unconfigured external dependency.
+The memory-free side of the demo uses a deterministic checklist built only from the current plan. This keeps the comparison focused on the effect of Hindsight rather than introducing a second model dependency.
 
 ### Demo honesty
 
