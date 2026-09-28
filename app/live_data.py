@@ -17,15 +17,23 @@ OPEN_METEO = "https://api.open-meteo.com/v1/forecast"
 USGS = "https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/all_day.geojson"
 IMD_CAP_RSS = "https://cap-sources.s3.amazonaws.com/in-imd-en/rss.xml"
 GDACS = "https://www.gdacs.org/gdacsapi/api/events/geteventlist/SEARCH"
-CACHE_TTL = 300
+CACHE_TTL = 600
 
 class LiveDataError(RuntimeError):
     pass
 
-def _get(url: str, timeout: int = 12) -> bytes:
-    req = urllib.request.Request(url, headers={"User-Agent":"CrisisOps/1.0","Accept":"application/json, application/xml, text/xml, */*"})
-    with urllib.request.urlopen(req, timeout=timeout) as response:
-        return response.read()
+def _get(url: str, timeout: int = 12, retries: int = 2) -> bytes:
+    headers = {"User-Agent": "CrisisOps/1.0", "Accept": "application/json, application/xml, text/xml, */*"}
+    for attempt in range(retries + 1):
+        try:
+            req = urllib.request.Request(url, headers=headers)
+            with urllib.request.urlopen(req, timeout=timeout) as response:
+                return response.read()
+        except urllib.error.HTTPError as exc:
+            if exc.code == 429 and attempt < retries:
+                time.sleep(2 ** attempt)
+                continue
+            raise
 
 def _json(url: str) -> dict[str, Any]:
     return json.loads(_get(url).decode("utf-8"))
@@ -64,7 +72,7 @@ def imd_alerts(limit:int=10) -> list[dict[str,Any]]:
     try: return _parse_rss(_get(IMD_CAP_RSS))[:limit]
     except Exception as exc: raise LiveDataError(f"IMD CAP feed unavailable: {exc}") from exc
 
-def gdacs_events(limit:int=12) -> list[dict[str,Any]]:
+def gdacs_events(lat: float, lon: float, limit:int=12, radius_km: float = 5000.0) -> list[dict[str,Any]]:
     today=datetime.now(timezone.utc).date()
     params=urllib.parse.urlencode({"eventlist":"EQ;TC;FL;DR;VO;WF","fromdate":str(today),"todate":str(today)})
     try: data=_json(f"{GDACS}?{params}")
@@ -73,13 +81,17 @@ def gdacs_events(limit:int=12) -> list[dict[str,Any]]:
     for row in rows[:limit]:
         if not isinstance(row,dict): continue
         p=row.get("properties",row); g=row.get("geometry",{}); coords=g.get("coordinates",[]) if isinstance(g,dict) else []
-        out.append({"event_id":p.get("eventid") or p.get("eventId") or row.get("eventid"),"event_type":p.get("eventtype") or p.get("eventType") or p.get("event"),"name":p.get("name") or p.get("eventname") or p.get("eventName"),"alert_level":p.get("alertlevel") or p.get("alertLevel"),"country":p.get("country"),"latitude":coords[1] if len(coords)>1 else p.get("lat"),"longitude":coords[0] if len(coords)>0 else p.get("lon"),"source":"Global Disaster Alert and Coordination System (GDACS)"})
+        event_lat = coords[1] if len(coords) > 1 else p.get("lat")
+        event_lon = coords[0] if len(coords) > 0 else p.get("lon")
+        if event_lat is not None and event_lon is not None and _haversine_km(lat, lon, float(event_lat), float(event_lon)) > radius_km:
+            continue
+        out.append({"event_id":p.get("eventid") or p.get("eventId") or row.get("eventid"),"event_type":p.get("eventtype") or p.get("eventType") or p.get("event"),"name":p.get("name") or p.get("eventname") or p.get("eventName"),"alert_level":p.get("alertlevel") or p.get("alertLevel"),"country":p.get("country"),"latitude":event_lat,"longitude":event_lon,"source":"Global Disaster Alert and Coordination System (GDACS)"})
     return out
 
 @lru_cache(maxsize=8)
 def _cached(lat:float,lon:float,bucket:int)->dict[str,Any]:
     result={"generated_at":datetime.now(timezone.utc).isoformat(),"location":{"name":DEFAULT_CITY if round(lat,3)==round(DEFAULT_LAT,3) and round(lon,3)==round(DEFAULT_LON,3) else "Custom location","latitude":lat,"longitude":lon},"sources":[],"weather":None,"earthquakes":[],"imd_alerts":[],"gdacs_events":[],"errors":[]}
-    for key,fn,src in [("weather",lambda:weather(lat,lon),"Open-Meteo"),("earthquakes",lambda:usgs_quakes(lat,lon),"USGS"),("imd_alerts",imd_alerts,"IMD CAP"),("gdacs_events",gdacs_events,"GDACS")]:
+    for key,fn,src in [("weather",lambda:weather(lat,lon),"Open-Meteo"),("earthquakes",lambda:usgs_quakes(lat,lon),"USGS"),("imd_alerts",imd_alerts,"IMD CAP"),("gdacs_events",lambda:gdacs_events(lat,lon),"GDACS")]:
         try:
             result[key]=fn()
             if key!="gdacs_events" or result[key]: result["sources"].append(src)
