@@ -1,13 +1,45 @@
 {% extends "base.html" %}
 {% block content %}
 <main class="shell">
-<section class="analysis-hero card"><div><span class="kicker">MEMORY-BACKED DECISION REVIEW</span><h1>What does the response history know?</h1><p>The left side uses only the current plan. The right side adds persistent Hindsight memory. This is the core before/after proof.</p></div><a class="ghost" href="/">← Common picture</a></section>
-<div id="analysis-root"><section class="card empty">No review yet. Submit a response plan from the dashboard.</section></div>
+  <section class="hero compact">
+    <div>
+      <span class="kicker">MEMORY REVIEW · OPERATOR INPUT</span>
+      <h1>What does the response history know?</h1>
+      <p class="hero-lede">The left side sees only the current plan. The right side adds persistent Hindsight memory.</p>
+    </div>
+    <a class="ghost" href="/">← Dashboard</a>
+  </section>
+  <div id="analysis-root">
+    <section class="card empty">No response-plan review yet.</section>
+  </div>
 </main>
 <script>
-function esc(s){return String(s||"").replace(/[&<>'"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;","'":"&#39;",""":"&quot;"}[c]))}
-function list(arr){return arr&&arr.length?"<ul>"+arr.map(x=>"<li>"+esc(x)+"</li>").join("")+"</ul>":"<p class=\"muted\">None surfaced.</p>"}
-async function render(){const root=document.getElementById("analysis-root");const r=await fetch("/api/latest-analysis");const d=await r.json();if(!d.analysis)return;const a=d.analysis,b=d.baseline||{};const mem=(d.similar||[]).map(x=>"<article class=\"recall-card\"><span>"+esc(x.type||"memory")+" · HINDSIGHT</span><p>"+esc(x.text||"")+"</p><small>"+esc((x.metadata||{}).location||"")+"</small></article>").join("");root.innerHTML="<section class=\"card risk-panel\"><div><span class=\"risk "+esc(a.risk_level)+"\">"+esc((a.risk_level||"medium").toUpperCase())+" RISK</span><span class=\"confidence\">CONFIDENCE "+esc((a.confidence||"medium").toUpperCase())+"</span></div><h2>"+esc(a.summary)+"</h2><p class=\"mono\">"+esc(d.source_type||"HINDSIGHT SYNTHESIS")+"</p></section><div class=\"compare-grid\"><section class=\"card\"><span class=\"label\">WITHOUT MEMORY</span><h3>Current-plan baseline</h3><p class=\"baseline-mode\">"+esc(b.mode||"memory-free baseline")+"</p><div class=\"memory-highlight neutral\">"+esc(b.summary||"No baseline returned.")+"</div>"+list(b.recommended_actions||[])+"</section><section class=\"card after\"><span class=\"label\">WITH MEMORY</span><h3>Hindsight-informed review</h3><div class=\"memory-highlight\">"+esc(a.summary)+"</div><p class=\"hindsight-source\">Persistent operational memory was recalled before reflection.</p></section></div><div class=\"grid-two\"><section class=\"card\"><span class=\"label\">RECALLED HISTORY · HINDSIGHT</span><div class=\"recall-list\">"+mem+"</div></section><section class=\"card\"><span class=\"label\">PATTERNS + CONSTRAINTS</span><h3>Recurring patterns</h3>"+list(a.recurring_patterns)+"<h3>Resource conflicts</h3>"+list(a.resource_conflicts)+"<h3>Transport constraints</h3>"+list(a.transport_constraints)+"</section></div><div class=\"grid-two\"><section class=\"card\"><span class=\"label\">RECOMMENDED HUMAN CHECKS</span>"+list(a.recommended_actions)+"</section><section class=\"card\"><span class=\"label\">UNANSWERED QUESTIONS</span>"+list(a.unanswered_questions)+"</section></div><section class=\"card\"><span class=\"label\">EVIDENCE</span>"+list(a.evidence)+"</section>"}
+function esc(s){return String(s ?? '').replace(/[&<>'"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c]))}
+function list(items){return items&&items.length?'<ul>'+items.map(x=>'<li>'+esc(x)+'</li>').join('')+'</ul>':'<p class="muted">None surfaced.</p>'}
+async function render(){
+  const root=document.getElementById('analysis-root');
+  try{
+    const r=await fetch('/api/latest-analysis',{cache:'no-store'});const d=await r.json();
+    if(!d.analysis)return;
+    const a=d.analysis||{}, b=d.baseline||{};
+    const memories=(d.similar||[]).map(x=>'<article class="memory-item"><div class="row"><span class="source-badge hindsight">HINDSIGHT MEMORY</span><span class="pill">'+esc(x.type||'memory')+'</span></div><p>'+esc(x.text||'')+'</p><small>'+esc((x.metadata||{}).location||'')+'</small></article>').join('');
+    root.innerHTML=
+      '<div class="review-status card"><div><span class="risk '+esc(a.risk_level||'medium')+'">'+esc((a.risk_level||'medium').toUpperCase())+'</span><span class="confidence">CONFIDENCE '+esc((a.confidence||'medium').toUpperCase())+'</span></div><p>'+esc(d.memory_live?'Hindsight memory was used.':'Hindsight was unavailable; this review is a local demo fallback.')+'</p></div>'+
+      '<section class="compare-grid">'+
+        '<article class="card"><div class="row"><span class="label">WITHOUT MEMORY</span><span class="source-badge operator">CURRENT PLAN ONLY</span></div><h2>Generic review</h2><p>'+esc(b.summary||'Review current needs, routes, resources and responders.')+'</p>'+list(b.recommended_actions||[])+'</article>'+
+        '<article class="card memory-card"><div class="row"><span class="label">WITH MEMORY</span><span class="source-badge hindsight">'+esc(d.source_type||'HINDSIGHT SYNTHESIS')+'</span></div><h2>'+esc(a.summary||'No reflection returned.')+'</h2><p class="muted">Persistent operational history is used before the review is written.</p></article>'+
+      '</section>'+
+      '<section class="split">'+
+        '<article class="card"><div class="row"><span class="label">RECALLED HISTORY</span><span class="source-badge hindsight">HINDSIGHT</span></div><div class="memory-list">'+memories+'</div></article>'+
+        '<article class="card"><span class="label">PATTERNS & CONSTRAINTS</span><h3>Recurring patterns</h3>'+list(a.recurring_patterns)+'<h3>Resource conflicts</h3>'+list(a.resource_conflicts)+'<h3>Transport constraints</h3>'+list(a.transport_constraints)+'</article>'+
+      '</section>'+
+      '<section class="split">'+
+        '<article class="card"><span class="label">RECOMMENDED HUMAN CHECKS</span>'+list(a.recommended_actions)+'</article>'+
+        '<article class="card"><span class="label">UNANSWERED QUESTIONS</span>'+list(a.unanswered_questions)+'</article>'+
+      '</section>'+
+      '<article class="card"><div class="row"><span class="label">EVIDENCE</span><span class="source-badge hindsight">HINDSIGHT-SOURCED</span></div>'+list(a.evidence)+'</article>';
+  }catch(e){root.innerHTML='<section class="card empty">Could not load the latest review.</section>'}
+}
 render();
 </script>
 {% endblock %}
