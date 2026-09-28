@@ -1,194 +1,209 @@
 {% extends "base.html" %}
 {% block content %}
 <main class="shell">
-  <section class="hero-grid">
-    <div class="hero-copy">
-      <div class="kicker">FIELD MEMORY · ALWAYS ON</div>
-      <h1>Emergency response that <em>remembers.</em></h1>
-      <p class="hero-lede">CrisisOps turns field reports, urgent needs, scarce resources, responder updates and route constraints into persistent operational memory — then brings that history back before the next decision.</p>
-      <div class="hero-actions"><a class="cta" href="/demo">Load memory demo</a><a class="ghost" href="#capture">Add field report</a></div><div class="demo-tools"><button class="ghost" onclick="seedDemo()">Seed Incident A + B</button><button class="ghost" onclick="verifyLoop()">Verify Retain → Recall → Reflect</button><button class="ghost" onclick="learningCurve()">Add learning incident</button></div><div id="demo-trace" class="demo-trace" hidden></div>
-      <div class="status-line"><span class="pulse"></span>{{ status }}</div>
-    </div>
-    <div class="command-card">
-      <div class="orbit-lines"></div>
-      <div class="hero-core"><span class="core-ring"></span><span class="core-dot"></span><strong>MEMORY</strong><small>CRISISOPS</small></div>
-      <div class="floating-note note-a"><b>RECALL</b><span>12 prior signals</span></div>
-      <div class="floating-note note-b"><b>REFLECT</b><span>3 route lessons</span></div>
-      <div class="command-panel">
-        <div class="command-head"><span>OPERATIONAL LOOP</span><span class="mono">CRS-07</span></div>
-        <div class="loop-row"><b>01</b><span>Capture</span><strong>→</strong><span>Field signal</span></div>
-        <div class="loop-row"><b>02</b><span>Retain</span><strong>→</strong><span>Hindsight memory</span></div>
-        <div class="loop-row"><b>03</b><span>Recall</span><strong>→</strong><span>Similar situations</span></div>
-        <div class="loop-row"><b>04</b><span>Reflect</span><strong>→</strong><span>Grounded plan review</span></div>
+  <section class="hero">
+    <div>
+      <span class="kicker">CRISISOPS · DISASTER RESPONSE MEMORY</span>
+      <h1>Disaster response that <em>remembers.</em></h1>
+      <p class="hero-lede">Live public hazard signals and human field reports become persistent Hindsight memory. Before the next response plan, CrisisOps brings relevant experience back into the decision.</p>
+      <div class="hero-actions">
+        <button class="cta" onclick="seedDemo()">Run memory demo</button>
+        <a class="ghost" href="#field-report">New field report</a>
+      </div>
+      <div class="status-row">
+        <span class="status-dot"></span>
+        <span>{{ status }}</span>
       </div>
     </div>
-  </section>
-
-  <section class="metrics">
-    <article><span>Events in picture</span><strong>{{ stats.events }}</strong><small>time-stamped signals</small></article>
-    <article><span>People affected</span><strong>{{ "{:,}".format(stats.affected_people) }}</strong><small>reported across sites</small></article>
-    <article><span>Open needs</span><strong>{{ stats.open_needs }}</strong><small>unresolved requests</small></article>
-    <article><span>Resource capacity</span><strong>{{ "{:,.0f}".format(stats.resources_available) }}</strong><small>available minus committed</small></article>
-    <article><span>Active responders</span><strong>{{ stats.active_responders }}</strong><small>deployed / en route</small></article>
-    <article class="alert-metric"><span>Route blockers</span><strong>{{ stats.blocked_routes }}</strong><small>closure / cutoff signals</small></article>
-  </section>
-
-  <section class="live-intel card">
-    <div class="pane-head">
-      <div><span class="label">REAL-TIME PUBLIC INTELLIGENCE</span><h2>Live hazard picture</h2></div>
-      <div class="live-controls"><span id="live-updated" class="live-stamp">Loading...</span><button class="ghost" onclick="loadLiveData()">Refresh</button><button class="cta" onclick="retainLiveData()">Retain in Hindsight</button></div>
+    <div class="hero-card">
+      <div class="hero-card-title">THE MEMORY LOOP</div>
+      <div class="step"><b>01</b><span>Capture</span><small>field signal</small></div>
+      <div class="step"><b>02</b><span>Retain</span><small>Hindsight memory</small></div>
+      <div class="step"><b>03</b><span>Recall</span><small>similar history</small></div>
+      <div class="step"><b>04</b><span>Reflect</span><small>grounded review</small></div>
+      <div class="step"><b>05</b><span>Learn</span><small>future context</small></div>
     </div>
-    <div class="live-grid">
-      <article class="live-weather">
-        <div class="live-source-row"><span class="live-source">WEATHER · OPEN-METEO</span><span class="source-badge real">REAL</span></div>
-        <div class="weather-main"><strong id="live-temp">—</strong><span>°C</span></div>
-        <div id="live-weather-summary" class="weather-summary">Loading current conditions...</div>
-        <div class="weather-facts"><span>Humidity <b id="live-humidity">—</b></span><span>Wind <b id="live-wind">—</b></span><span>Gust <b id="live-gust">—</b></span><span>Rain <b id="live-rain">—</b></span></div>
-      </article>
-      <article>
-        <div class="live-source-row"><span class="live-source">INDIA METEOROLOGICAL DEPARTMENT · CAP</span><span class="source-badge real">REAL</span></div>
-        <div id="imd-alerts" class="live-list"><p class="muted">Loading official alerts...</p></div>
-      </article>
-      <article>
-        <div class="live-source-row"><span class="live-source">USGS · EARTHQUAKES PAST DAY</span><span class="source-badge real">REAL</span></div>
-        <div id="quake-list" class="live-list"><p class="muted">Loading seismic feed...</p></div>
-      </article>
-      <article>
-        <div class="live-source-row"><span class="live-source">GDACS · GLOBAL DISASTER ALERTS</span><span class="source-badge real">REAL</span></div>
-        <div id="gdacs-list" class="live-list"><p class="muted">Loading global alerts...</p></div>
-      </article>
+  </section>
+
+  <section id="demo-trace" class="card demo-trace" hidden></section>
+
+  <section class="section-head">
+    <div><span class="label">LIVE PUBLIC INTELLIGENCE</span><h2>Current hazard picture</h2></div>
+    <div class="actions"><span id="live-updated" class="muted">Loading…</span><button class="ghost small" onclick="loadLiveData()">Refresh</button><button class="cta small" onclick="retainLiveData()">Retain in Hindsight</button></div>
+  </section>
+
+  <section class="live-grid">
+    <article class="card live-card">
+      <div class="card-head"><span>Weather · Open-Meteo</span><span class="source-badge real">REAL</span></div>
+      <strong id="live-temp" class="big-number">—</strong><span class="unit">°C</span>
+      <p id="live-weather-summary" class="muted">Loading current conditions…</p>
+      <div class="facts"><span>Humidity <b id="live-humidity">—</b></span><span>Wind <b id="live-wind">—</b></span><span>Rain <b id="live-rain">—</b></span></div>
+    </article>
+    <article class="card live-card">
+      <div class="card-head"><span>IMD CAP alerts</span><span class="source-badge real">REAL</span></div>
+      <div id="imd-alerts" class="live-list"><p class="muted">Loading…</p></div>
+    </article>
+    <article class="card live-card">
+      <div class="card-head"><span>USGS earthquakes</span><span class="source-badge real">REAL</span></div>
+      <div id="quake-list" class="live-list"><p class="muted">Loading…</p></div>
+    </article>
+    <article class="card live-card">
+      <div class="card-head"><span>GDACS events</span><span class="source-badge real">REAL</span></div>
+      <div id="gdacs-list" class="live-list"><p class="muted">Loading…</p></div>
+    </article>
+  </section>
+
+  <div class="note">REAL = live public feed. These signals are not verified field status. CrisisOps keeps the source and retrieval time visible.</div>
+
+  <section class="section-head">
+    <div><span class="label">MEMORY PROOF</span><h2>See the system remember</h2></div>
+    <div class="actions"><button class="ghost small" onclick="seedDemo()">1 · Seed Incident A</button><button class="ghost small" onclick="verifyLoop()">2 · Recall + Reflect</button><button class="ghost small" onclick="learningCurve()">3 · Add learning incident</button></div>
+  </section>
+
+  <section class="card memory-proof">
+    <div class="proof-copy">
+      <h3>One simple story</h3>
+      <p><strong>Incident A:</strong> North Ward flooding. 120 people affected. Bridge closed. Road delivery failed because the route became inaccessible.</p>
+      <p><strong>Incident B:</strong> North Ward flooding again. 150 people affected. 2 boats + 1 truck. Bridge 4 closed. Proposed canal route.</p>
+      <p class="muted">Incident A and B are <span class="source-badge synthetic">SYNTHETIC</span> demo records. They are never presented as real victims or agency reports.</p>
     </div>
-    <div class="live-disclaimer">Public-feed data is live external intelligence, not a substitute for verified field reports. CrisisOps keeps source, timestamp and uncertainty visible.</div>
-  </section>
-
-  <section class="workbench">
-    <div class="map-pane card">
-      <div class="pane-head"><div><span class="label">COMMON OPERATIONAL PICTURE</span><h2>Situation map</h2></div><span class="map-chip">{{ events|length }} signals</span></div>
-      <div class="map-shell" id="ops-map">
-        <div class="map-grid"></div>
-        <div class="river"></div>
-        <div class="map-label l1">NORTH WARD</div><div class="map-label l2">MARKET ZONE</div><div class="map-label l3">EAST BYPASS</div>
-        {% for e in events %}
-        <button class="pin pin-{{ e.urgency }}" data-event="{{ e.id }}" title="{{ e.title }}" style="left:{{ 8 + ((e.lon-78.31)/0.18)*84 }}%;top:{{ 12 + ((17.51-e.lat)/0.17)*74 }}%;">
-          <span></span><b>{{ loop.index }}</b>
-        </button>
-        {% endfor %}
-        <div class="map-scale">0 —— 5 km —— 10 km</div>
-      </div>
-      <div class="legend"><span><i class="dot critical"></i>Critical</span><span><i class="dot high"></i>High</span><span><i class="dot medium"></i>Medium</span><span><i class="dot low"></i>Low</span></div>
+    <div class="proof-actions">
+      <button class="cta full" onclick="verifyLoop()">Verify live Retain → Recall → Reflect</button>
+      <a class="ghost full" href="/analysis">Open Memory Review</a>
     </div>
-
-    <aside class="side-pane card">
-      <div class="pane-head"><div><span class="label">FIELD STREAM</span><h2>Latest signals</h2></div><span class="live-dot">LIVE</span></div>
-      <div class="signal-list">
-      {% for e in events[:9] %}
-        <article class="signal" id="event-{{ e.id }}" data-search="{{ e.title }} {{ e.location }} {{ e.sector }} {{ e.details }}">
-          <div class="signal-top"><span class="signal-kind">{{ e.kind|replace("_"," ") }}</span><span class="source-badge {{ "synthetic" if e.source_type == "synthetic" else "operator" }}">{{ "SYNTHETIC" if e.source_type == "synthetic" else "OPERATOR INPUT" }}</span><span class="urgency {{ e.urgency }}">{{ e.urgency }}</span></div>
-          <h3>{{ e.title }}</h3><p>{{ e.location }} · {{ e.occurred_at.strftime("%d %b %H:%M") }}</p>
-          <div class="signal-foot"><span>{{ e.affected_people }} people</span><span>{{ e.sector }}</span><span>{{ e.status }}</span></div>
-        </article>
-      {% else %}<div class="empty">Load the exercise to populate the common picture.</div>{% endfor %}
-      </div>
-    </aside>
   </section>
 
-  <section class="memory-banner card">
-    <div><span class="label">PERSISTENT MEMORY</span><h2>The response learns from yesterday.</h2><p>Hindsight is used as the operational memory layer, not a decorative chatbot. The demo makes memory visible through retained field history, recalled matches, and reflected plan reviews.</p></div>
-    <div class="memory-stats"><div><span>RETAIN</span><b>field truth</b></div><div><span>RECALL</span><b>similar moments</b></div><div><span>REFLECT</span><b>grounded synthesis</b></div></div>
-  </section>
-
-  <section class="two-col">
-    <div class="card" id="capture">
-      <div class="pane-head"><div><span class="label">INPUT</span><h2>Capture a field report</h2></div></div>
-      <form method="post" action="/events" class="form-grid">
-        <input name="title" placeholder="e.g. North Ward shelter reaches 80% capacity" required>
-        <input name="location" placeholder="Location / sector" required>
-        <input name="lat" value="17.45" type="hidden"><input name="lon" value="78.40" type="hidden">
+  <section id="field-report" class="forms">
+    <article class="card">
+      <div class="section-mini"><span class="label">OPERATOR INPUT</span><h2>Capture field report</h2></div>
+      <form method="post" action="/events" class="form">
+        <input name="title" required placeholder="What happened?">
+        <input name="location" required placeholder="Location">
         <select name="kind"><option>situation</option><option>need</option><option>resource</option><option>responder_update</option><option>transport</option><option>condition</option><option>action</option><option>decision</option></select>
         <select name="urgency"><option>critical</option><option selected>high</option><option>medium</option><option>low</option></select>
-        <input name="affected_people" type="number" value="0" min="0" placeholder="People affected">
-        <input name="sector" value="shelter" placeholder="Sector">
-        <textarea name="details" placeholder="What is happening? What changed?"></textarea>
-        <input name="needs_json" value='[{"category":"water","priority":"high","quantity":200,"unit":"kits","status":"open","notes":""}]'>
-        <input name="resources_json" value='[]'>
-        <input name="responders_json" value='[]'>
-        <input name="transport_constraints" placeholder="Bridge closed | route waterlogged">
-        <input name="operational_conditions" placeholder="Network intermittent | water rising">
-        <input name="attempted_actions" placeholder="Road delivery blocked at 18:20">
+        <input name="affected_people" type="number" min="0" value="0" placeholder="People affected">
+        <input name="sector" value="multi-sector" placeholder="Sector">
+        <textarea name="details" placeholder="Situation or change"></textarea>
+        <input name="needs" placeholder="Needs: water | medical support">
+        <input name="resources" placeholder="Resources: boats | truck">
+        <input name="responders" placeholder="Responders: team names">
+        <input name="transport_constraints" placeholder="Transport constraints: bridge closed">
+        <input name="operational_conditions" placeholder="Conditions: road waterlogged">
+        <input name="attempted_actions" placeholder="Attempted action: road delivery">
         <input name="outcome" placeholder="Outcome / lesson">
-        <button class="cta full" type="submit">Retain field memory</button>
+        <button class="cta full" type="submit">Save operator report</button>
       </form>
-    </div>
+    </article>
 
-    <div class="card plan-card">
-      <div class="pane-head"><div><span class="label">DECISION SUPPORT</span><h2>Review a response plan</h2></div><span class="memory-pill">HINDSIGHT</span></div>
-      <p class="hint">Ask: “Does this resemble anything we've already experienced?”</p>
-      <form method="post" action="/analyze" class="form-grid">
-        <textarea name="objective" required placeholder="Objective: move 600 shelter kits to North Ward before nightfall"></textarea>
-        <input name="locations" placeholder="North Ward | Market Zone">
-        <input name="resources" placeholder="2 boats | 1 truck | shelter kits">
-        <input name="transport_plan" placeholder="Use canal route, then transfer at Depot 2">
-        <input name="constraints" placeholder="Bridge 4 closed | network intermittent">
-        <input name="proposed_actions" placeholder="Stage boats | preload kits | confirm local coordinator">
-        <textarea name="context" placeholder="Latest field context, timing, who is on scene"></textarea>
-        <button class="cta danger full" type="submit">Recall history + review plan</button>
+    <article class="card">
+      <div class="section-mini"><span class="label">OPERATOR INPUT · DECISION SUPPORT</span><h2>Review response plan</h2></div>
+      <form method="post" action="/analyze" class="form">
+        <textarea name="objective" required placeholder="Objective: move medical supplies to North Ward"></textarea>
+        <input name="locations" placeholder="Locations: North Ward | Market Zone">
+        <input name="resources" placeholder="Resources: 2 boats | 1 truck">
+        <input name="transport_plan" placeholder="Transport plan">
+        <input name="constraints" placeholder="Constraints: Bridge 4 closed">
+        <input name="proposed_actions" placeholder="Proposed actions: stage boats | confirm coordinator">
+        <textarea name="context" placeholder="Latest field context"></textarea>
+        <button class="cta full" type="submit">Recall history + review</button>
       </form>
-      <div class="before-after"><div><span>WITHOUT MEMORY</span><p>“Assess needs, check routes, allocate resources.”</p></div><div><span>WITH MEMORY</span><p>Historical evidence can surface prior route failures, resource shortages and tactics that worked under similar conditions.</p></div></div>
-    </div>
+      <p class="form-note">The Memory Review page shows <strong>Without memory</strong> next to <strong>With memory</strong>.</p>
+    </article>
   </section>
 
-  <section class="card timeline-card">
-    <div class="pane-head"><div><span class="label">LIVING MEMORY</span><h2>From signal → lesson</h2></div><button class="ghost" onclick="loadMemory()">Refresh memory lenses</button></div>
-    <div class="memory-grid" id="memory-grid"><div class="memory-lens"><span>WHAT KEEPS BREAKING</span><p>Waiting for memory synthesis…</p></div><div class="memory-lens"><span>WHAT ACTUALLY WORKED</span><p>Waiting for memory synthesis…</p></div><div class="memory-lens"><span>WHERE CAPACITY IS FRAGILE</span><p>Waiting for memory synthesis…</p></div><div class="memory-lens"><span>INSTITUTIONAL MEMORY</span><p>Waiting for memory synthesis…</p></div></div>
+  <section class="section-head">
+    <div><span class="label">OPERATIONAL HISTORY</span><h2>Recent reports</h2></div>
+    <span class="muted">{{ events|length }} records</span>
   </section>
-<section class="card timeline-card">
-  <div class="pane-head"><div><span class="label">ANALYSIS HISTORY</span><h2>Memory-backed reviews</h2></div><span class="source-badge hindsight">HINDSIGHT / FALLBACK</span></div>
-  <div id="analysis-history" class="history-list"><div class="empty">No response-plan reviews yet.</div></div>
-</section>
+
+  <section class="records">
+    {% for e in events[:8] %}
+    <article class="card record">
+      <div class="record-top">
+        <div><span class="source-badge {{ 'synthetic' if e.source_type == 'synthetic' else 'operator' }}">{{ 'SYNTHETIC' if e.source_type == 'synthetic' else 'OPERATOR INPUT' }}</span><span class="pill">{{ e.kind|replace('_',' ') }}</span></div>
+        <span class="risk {{ e.urgency }}">{{ e.urgency }}</span>
+      </div>
+      <h3>{{ e.title }}</h3>
+      <p>{{ e.location }} · {{ e.occurred_at.strftime('%d %b %H:%M UTC') }}</p>
+      <small>{{ e.outcome or e.details }}</small>
+    </article>
+    {% else %}
+    <div class="card empty">No reports yet. Start with the memory demo or enter an operator report above.</div>
+    {% endfor %}
+  </section>
+
+  <section class="section-head">
+    <div><span class="label">LIVING MEMORY</span><h2>Lessons across incidents</h2></div>
+    <button class="ghost small" onclick="loadMemory()">Refresh Hindsight</button>
+  </section>
+  <section id="memory-grid" class="memory-grid">
+    <article class="card memory-lens"><span>WHAT KEEPS BREAKING</span><p>Press Refresh Hindsight.</p></article>
+    <article class="card memory-lens"><span>WHAT ACTUALLY WORKED</span><p>Press Refresh Hindsight.</p></article>
+    <article class="card memory-lens"><span>WHERE CAPACITY IS FRAGILE</span><p>Press Refresh Hindsight.</p></article>
+    <article class="card memory-lens"><span>INSTITUTIONAL MEMORY</span><p>Press Refresh Hindsight.</p></article>
+  </section>
+</main>
 
 <script>
-function traceHtml(html){const box=document.getElementById("demo-trace");box.hidden=false;box.innerHTML=html}
-async function seedDemo(){traceHtml("<div class=\"trace-loading\">Seeding synthetic Incident A + B…</div>");const r=await fetch("/api/demo/seed",{method:"POST"});const d=await r.json();traceHtml("<span class=\"source-badge synthetic\">SYNTHETIC</span><p>Incident A #"+escapeHtml(d.incident_a_id)+" retained as <span class=\"mono\">"+escapeHtml(d.retained_memory_id)+"</span>.</p><p>Incident B #"+escapeHtml(d.incident_b_id)+" is the recall target and is <b>not pre-retained</b>.</p>");location.hash="event-"+d.incident_a_id}
-async function verifyLoop(){traceHtml("<div class=\"trace-loading\">Running live Retain → Recall → Reflect…</div>");const r=await fetch("/api/demo/verify-loop",{method:"POST"});const d=await r.json();const e=d.demo_expectations||{};traceHtml("<div><span class=\"source-badge "+(d.hindsight_live?"hindsight":"fallback")+"\">"+(d.hindsight_live?"HINDSIGHT LIVE":"DEMO FALLBACK")+"</span> <span class=\"mono\">"+escapeHtml(d.latency_ms)+" ms</span></div><p><b>Retained:</b> "+escapeHtml(d.retained_memory_id)+"</p><p><b>Recalled:</b> "+escapeHtml((d.recalled_memory_ids||[]).join(", ")||"none")+"</p><p><b>Road failure:</b> "+(e.road_delivery_failure_surface?"YES":"NO")+" · <b>Canal/boat:</b> "+(e.canal_or_boat_route_surface?"YES":"NO")+" · <b>Bridge:</b> "+(e.bridge_closure_surface?"YES":"NO")+"</p><div class=\"trace-summary\">"+escapeHtml((d.reflection||{}).summary||"No reflection returned.")+"</div>")}
-async function learningCurve(){traceHtml("<div class=\"trace-loading\">Adding Incident C and reflecting again…</div>");const r=await fetch("/api/demo/learning-curve",{method:"POST"});const d=await r.json();traceHtml("<span class=\"source-badge synthetic\">SYNTHETIC</span><p>Third incident #"+escapeHtml(d.third_incident_id)+" retained as "+escapeHtml(d.third_retained_memory_id)+"</p><div class=\"trace-grid\"><div><b>Before</b><p>"+escapeHtml((d.before||{}).summary||"")+"</p></div><div><b>After</b><p>"+escapeHtml((d.after||{}).summary||"")+"</p></div></div>")}
-async function loadAnalysisHistory(){const el=document.getElementById("analysis-history");if(!el)return;try{const r=await fetch("/api/analysis-history");const rows=await r.json();if(!rows.length)return;el.innerHTML=rows.map(x=>"<article class=\"history-item\"><div><span class=\"source-badge "+(x.memory_live?"hindsight":"fallback")+"\">"+(x.memory_live?"HINDSIGHT SYNTHESIS":"LOCAL DEMO FALLBACK")+"</span> <span class=\"mono\">"+escapeHtml((x.created_at||"").replace("T"," ").replace("Z",""))+"</span></div><b>"+escapeHtml((x.input||{}).objective||"Response plan review")+"</b><p>"+escapeHtml((x.analysis||{}).summary||"")+"</p></article>").join("")}catch(e){el.innerHTML="<div class=\"empty\">Analysis history unavailable.</div>"}}
-</script></main>
-<script>
-async function loadMemory(){const grid=document.getElementById('memory-grid');const r=await fetch('/api/memory');const d=await r.json();if(!d.live){grid.innerHTML=Object.keys({a:1,b:1,c:1,d:1}).map((_,i)=>'<div class="memory-lens"><span>MEMORY OFFLINE</span><p>'+escapeHtml(d.error||'Connect Hindsight to synthesize cross-event memory.')+'</p></div>').join('');return;}grid.innerHTML=Object.entries(d.lenses).map(([k,v])=>'<div class="memory-lens"><span>'+escapeHtml(k).toUpperCase()+'</span><p>'+escapeHtml(v)+'</p></div>').join('')}
-function escapeHtml(s){return String(s||'').replace(/[&<>'"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c]))}
-document.querySelectorAll('.pin').forEach(p=>p.addEventListener('click',()=>{const e=document.getElementById('event-'+p.dataset.event);if(e){e.scrollIntoView({behavior:'smooth',block:'center'});e.classList.add('focus');setTimeout(()=>e.classList.remove('focus'),1200)}})); loadAnalysisHistory();
-</script>
-<script>
+function esc(s){return String(s ?? '').replace(/[&<>'"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c]))}
+function showTrace(html){const box=document.getElementById('demo-trace');box.hidden=false;box.innerHTML=html;box.scrollIntoView({behavior:'smooth',block:'nearest'})}
+
+async function seedDemo(){
+  showTrace('<strong>Seeding the canonical synthetic scenario…</strong>');
+  try{const r=await fetch('/api/demo/seed',{method:'POST'});const d=await r.json();showTrace('<span class="source-badge synthetic">SYNTHETIC</span><p>Incident A #'+esc(d.incident_a_id)+' retained as <span class="mono">'+esc(d.retained_memory_id)+'</span>.</p><p>Incident B #'+esc(d.incident_b_id)+' is the recall target. It is not pre-retained.</p>')}catch(e){showTrace('<strong>Demo error:</strong> '+esc(e.message))}
+}
+
+async function verifyLoop(){
+  showTrace('<strong>Running Retain → Recall → Reflect…</strong>');
+  try{
+    const r=await fetch('/api/demo/verify-loop',{method:'POST'});const d=await r.json();const x=d.demo_expectations||{};
+    showTrace('<div class="trace-head"><span class="source-badge '+(d.hindsight_live?'hindsight':'fallback')+'">'+(d.hindsight_live?'HINDSIGHT LIVE':'LOCAL DEMO FALLBACK')+'</span><span class="mono">'+esc(d.latency_ms)+' ms</span></div><p><b>Retained:</b> '+esc(d.retained_memory_id)+'</p><p><b>Recalled memories:</b> '+esc((d.recalled_memory_ids||[]).join(', ')||'none')+'</p><p><b>Road failure surfaced:</b> '+(x.road_delivery_failure_surface?'YES':'NO')+' · <b>Canal/boat evidence:</b> '+(x.canal_or_boat_route_surface?'YES':'NO')+' · <b>Bridge evidence:</b> '+(x.bridge_closure_surface?'YES':'NO')+'</p><div class="trace-summary">'+esc((d.reflection||{}).summary||'No reflection returned.')+'</div>')}
+  catch(e){showTrace('<strong>Demo error:</strong> '+esc(e.message))}
+}
+
+async function learningCurve(){
+  showTrace('<strong>Adding Incident C and reflecting again…</strong>');
+  try{const r=await fetch('/api/demo/learning-curve',{method:'POST'});const d=await r.json();showTrace('<span class="source-badge synthetic">SYNTHETIC</span><p>Incident C #'+esc(d.third_incident_id)+' retained as '+esc(d.third_retained_memory_id)+'</p><div class="learning-grid"><div><b>Before</b><p>'+esc((d.before||{}).summary||'')+'</p></div><div><b>After</b><p>'+esc((d.after||{}).summary||'')+'</p></div></div>')}catch(e){showTrace('<strong>Demo error:</strong> '+esc(e.message))}
+}
+
 async function loadLiveData(){
   try{
-    const r=await fetch('/api/live-data?lat=17.385&lon=78.4867',{cache:'no-store'});
-    const d=await r.json();
+    const r=await fetch('/api/live-data?lat=17.385&lon=78.4867',{cache:'no-store'});const d=await r.json();
     document.getElementById('live-updated').textContent='Updated '+new Date(d.generated_at).toLocaleTimeString();
     const w=d.weather||{};
     document.getElementById('live-temp').textContent=w.temperature_c??'—';
     document.getElementById('live-humidity').textContent=(w.humidity_pct??'—')+'%';
     document.getElementById('live-wind').textContent=(w.wind_kmh??'—')+' km/h';
-    document.getElementById('live-gust').textContent=(w.gust_kmh??'—')+' km/h';
     document.getElementById('live-rain').textContent=(w.precipitation_mm??'—')+' mm';
     document.getElementById('live-weather-summary').textContent='Current model condition · '+(w.observed_at||'timestamp unavailable')+' · '+(w.location?.timezone||'local time');
-    const alerts=d.imd_alerts||[];
-    document.getElementById('imd-alerts').innerHTML=alerts.length?alerts.slice(0,5).map(a=>'<a class="live-item" target="_blank" rel="noreferrer" href="'+escAttr(a.link)+'"><b>'+esc(a.title||'IMD alert')+'</b><small>'+esc(a.published||'')+'</small></a>').join(''):'<p class="muted">No CAP items returned.</p>';
-    const quakes=d.earthquakes||[];
-    document.getElementById('quake-list').innerHTML=quakes.length?quakes.slice(0,5).map(q=>'<a class="live-item" target="_blank" rel="noreferrer" href="'+escAttr(q.url)+'"><b>M '+esc(q.magnitude)+' · '+esc(q.place)+'</b><small>'+esc(q.distance_km)+' km from selected location · '+esc(q.time)+'</small></a>').join(''):'<p class="muted">No matching earthquakes in the selected radius.</p>';
-    const gd=d.gdacs_events||[];
-    document.getElementById('gdacs-list').innerHTML=gd.length?gd.slice(0,5).map(x=>'<div class="live-item"><b>'+esc(x.alert_level||'Alert')+' · '+esc(x.name||x.event_type||'Disaster event')+'</b><small>'+esc(x.country||'Global')+'</small></div>').join(''):'<p class="muted">No GDACS events returned for the current window.</p>';
+    const alerts=d.imd_alerts||[], quakes=d.earthquakes||[], gd=d.gdacs_events||[];
+    document.getElementById('imd-alerts').innerHTML=alerts.length?alerts.slice(0,4).map(a=>'<a class="live-item" target="_blank" rel="noreferrer" href="'+esc(a.link)+'"><b>'+esc(a.title||'IMD alert')+'</b><small>'+esc(a.published||'')+'</small></a>').join(''):'<p class="muted">No CAP items returned.</p>';
+    document.getElementById('quake-list').innerHTML=quakes.length?quakes.slice(0,4).map(q=>'<a class="live-item" target="_blank" rel="noreferrer" href="'+esc(q.url)+'"><b>M '+esc(q.magnitude)+' · '+esc(q.place)+'</b><small>'+esc(q.distance_km)+' km from selected point · '+esc(q.time)+'</small></a>').join(''):'<p class="muted">No matching earthquakes.</p>';
+    document.getElementById('gdacs-list').innerHTML=gd.length?gd.slice(0,4).map(x=>'<div class="live-item"><b>'+esc(x.alert_level||'Alert')+' · '+esc(x.name||x.event_type||'Disaster event')+'</b><small>'+esc(x.country||'Global')+'</small></div>').join(''):'<p class="muted">No GDACS events returned.</p>';
   }catch(e){
     document.getElementById('live-updated').textContent='Feed unavailable';
-    document.getElementById('imd-alerts').innerHTML='<p class="muted">Live feeds unavailable: '+esc(e.message)+'</p>';
+    for(const id of ['imd-alerts','quake-list','gdacs-list']) document.getElementById(id).innerHTML='<p class="muted">Public feed unavailable right now.</p>';
   }
 }
-function esc(s){return String(s??'').replace(/[&<>'"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c]))}
-function escAttr(s){return esc(s)}
+
 async function retainLiveData(){
-  const button=document.querySelector('.live-controls .cta'); button.disabled=true; button.textContent='Saving...';
-  try{const r=await fetch('/api/live-data/retain?lat=17.385&lon=78.4867',{method:'POST'}); const d=await r.json(); button.textContent=d.ok?'Memory saved':'Memory unavailable';}
-  catch(e){button.textContent='Memory unavailable'}
-  setTimeout(()=>{button.disabled=false;button.textContent='Retain in Hindsight'},2500);
+  const button=document.querySelector('.live-card + .live-card');
+  try{
+    const r=await fetch('/api/live-data/retain?lat=17.385&lon=78.4867',{method:'POST'});const d=await r.json();
+    showTrace(d.ok?'<span class="source-badge real">REAL</span><p>Retained '+esc(d.retained)+' public-intelligence memories in Hindsight.</p>':'<strong>Hindsight unavailable:</strong> '+esc(d.error||'Unknown error'));
+  }catch(e){showTrace('<strong>Hindsight unavailable:</strong> '+esc(e.message))}
 }
+
+async function loadMemory(){
+  const grid=document.getElementById('memory-grid');
+  grid.innerHTML='<article class="card empty">Querying Hindsight…</article>';
+  try{
+    const r=await fetch('/api/memory');const d=await r.json();
+    if(!d.live){grid.innerHTML='<article class="card empty"><span class="source-badge fallback">LOCAL DEMO FALLBACK</span><p>Hindsight is unavailable. No persistent-memory synthesis is being claimed.</p></article>';return}
+    grid.innerHTML=Object.entries(d.lenses||{}).map(([k,v])=>'<article class="card memory-lens"><div><span>'+esc(k).toUpperCase()+'</span><span class="source-badge hindsight">HINDSIGHT SYNTHESIS</span></div><p>'+esc(v)+'</p></article>').join('');
+  }catch(e){grid.innerHTML='<article class="card empty">Hindsight query failed.</article>'}
+}
+
 loadLiveData();
-</script>{% endblock %}
+</script>
+{% endblock %}
