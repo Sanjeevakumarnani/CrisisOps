@@ -24,7 +24,7 @@ from .db import (
     store_analysis,
     store_live_intel,
 )
-from .hindsight_service import CrisisMemory, hindsight_ready
+from .hindsight_service import CrisisMemory, hindsight_configured
 from .live_data import DEFAULT_LAT, DEFAULT_LON, get_live_data
 from .models import Need, OperationalEventCreate, Resource, Responder, ResponsePlanAnalysis, ResponsePlanInput
 from .utils import events_from_csv
@@ -136,14 +136,14 @@ def memory_free_baseline(plan: ResponsePlanInput) -> dict:
         }
 
 
-def analyze_plan(plan: ResponsePlanInput) -> dict:
+async def analyze_plan(plan: ResponsePlanInput) -> dict:
     baseline = memory_free_baseline(plan)
     similar = []
     memory_live = False
     try:
         memory = CrisisMemory()
-        similar = memory.recall(plan)
-        reflection = memory.reflect(plan)
+        similar = await memory.recall(plan)
+        reflection = await memory.reflect(plan)
         memory_live = True
     except Exception as exc:
         similar = local_similarity(plan, list_events())
@@ -201,7 +201,7 @@ def canonical_demo_events() -> tuple:
     return a, b
 
 
-def seed_canonical_demo() -> dict:
+async def seed_canonical_demo() -> dict:
     a_spec, b_spec = canonical_demo_events()
     a = find_demo_event(DEMO_A_TITLE)
     if not a:
@@ -211,7 +211,7 @@ def seed_canonical_demo() -> dict:
         b = create_event(b_spec)
     memory_id = None
     try:
-        memory_id = CrisisMemory().retain(a)
+        memory_id = await CrisisMemory().retain(a)
     except Exception as exc:
         memory_id = None
     return {
@@ -219,7 +219,7 @@ def seed_canonical_demo() -> dict:
         "retained_memory_id": memory_id or f"crisis-event-{a.id}",
         "incident_a_source_type": a.source_type, "incident_b_source_type": b.source_type,
         "incident_b_is_retained": False,
-        "hindsight_available": hindsight_ready(),
+        "hindsight_available": hindsight_configured(),
     }
 
 
@@ -268,7 +268,7 @@ async def import_events(file: UploadFile = File(...)):
     events, _errors = events_from_csv(content)
     memory = None
     try:
-        memory = CrisisMemory(); memory.ensure_bank()
+        memory = CrisisMemory(); await memory.ensure_bank()
     except Exception:
         pass
     for event_data in events:
@@ -282,24 +282,24 @@ async def import_events(file: UploadFile = File(...)):
 
 
 @app.get("/demo")
-def demo_data():
-    seed_canonical_demo()
+async def demo_data():
+    await seed_canonical_demo()
     return RedirectResponse(url="/", status_code=303)
 
 
 @app.post("/analyze")
-def analyze_response(
+async def analyze_response(
     objective: str = Form(...), locations: str = Form(""), resources: str = Form(""),
     transport_plan: str = Form(""), constraints: str = Form(""), proposed_actions: str = Form(""), context: str = Form(""),
 ):
     plan = response_plan_from_values(objective, locations, resources, transport_plan, constraints, proposed_actions, context)
-    result = analyze_plan(plan)
+    result = await analyze_plan(plan)
     store_analysis(plan.model_dump(), result)
     return RedirectResponse(url="/analysis?ready=1", status_code=303)
 
 
 @app.get("/api/analyze/compare")
-def api_analyze_compare(
+async def api_analyze_compare(
     objective: str, locations: str = "", resources: str = "", transport_plan: str = "",
     constraints: str = "", proposed_actions: str = "", context: str = "",
 ):
@@ -315,10 +315,10 @@ def api_live_data(lat: float = DEFAULT_LAT, lon: float = DEFAULT_LON):
 
 
 @app.post("/api/live-data/retain")
-def retain_live_data(lat: float = DEFAULT_LAT, lon: float = DEFAULT_LON):
+async def retain_live_data(lat: float = DEFAULT_LAT, lon: float = DEFAULT_LON):
     snapshot = get_live_data(lat, lon)
     try:
-        count = CrisisMemory().retain_live_snapshot(snapshot)
+        count = await CrisisMemory().retain_live_snapshot(snapshot)
         for provider, payload in [
             ("open-meteo", snapshot.get("weather")),
             ("usgs", snapshot.get("earthquakes")),
@@ -333,14 +333,14 @@ def retain_live_data(lat: float = DEFAULT_LAT, lon: float = DEFAULT_LON):
 
 
 @app.post("/api/demo/seed")
-def api_demo_seed():
-    return seed_canonical_demo()
+async def api_demo_seed():
+    return await seed_canonical_demo()
 
 
 @app.api_route("/api/demo/verify-loop", methods=["GET", "POST"])
-def api_demo_verify_loop():
+async def api_demo_verify_loop():
     start = time.perf_counter()
-    seeded = seed_canonical_demo()
+    seeded = await seed_canonical_demo()
     a_id = seeded["incident_a_id"]
     _, b_spec = canonical_demo_events()
     plan = ResponsePlanInput(
@@ -352,8 +352,8 @@ def api_demo_verify_loop():
     )
     try:
         memory = CrisisMemory()
-        recalled = memory.recall(plan)
-        reflection = memory.reflect(plan)
+        recalled = await memory.recall(plan)
+        reflection = await memory.reflect(plan)
         live = True
     except Exception as exc:
         recalled = local_similarity(plan, [get_event(a_id)])
@@ -375,14 +375,14 @@ def api_demo_verify_loop():
 
 
 @app.post("/api/demo/learning-curve")
-def api_demo_learning_curve():
-    seeded = seed_canonical_demo()
+async def api_demo_learning_curve():
+    seeded = await seed_canonical_demo()
     _, b_spec = canonical_demo_events()
     plan = response_plan_from_values(
         "Respond to North Ward flooding again with 2 boats and 1 truck using the canal route.",
         "North Ward", "2 boats|1 truck", "Use canal route", "Bridge 4 closed", "Stage boats|Move water and medical support", "150 people affected; current road access is uncertain.",
     )
-    before = analyze_plan(plan)["analysis"]
+    before = (await analyze_plan(plan))["analysis"]
     c = find_demo_event(DEMO_C_TITLE)
     if not c:
         c_spec = OperationalEventCreate(
@@ -399,8 +399,8 @@ def api_demo_learning_curve():
         )
         c = create_event(c_spec)
     try:
-        retained_id = CrisisMemory().retain(c)
-        after_result = analyze_plan(plan)
+        retained_id = await CrisisMemory().retain(c)
+        after_result = await analyze_plan(plan)
         after = after_result["analysis"]
         live = after_result["memory_live"]
     except Exception as exc:
@@ -437,9 +437,9 @@ def api_analysis_history():
 
 
 @app.get("/api/memory")
-def api_memory():
+async def api_memory():
     try:
-        return {"live": True, "source_type": "HINDSIGHT SYNTHESIS", "lenses": CrisisMemory().memory_lenses()}
+        return {"live": True, "source_type": "HINDSIGHT SYNTHESIS", "lenses": await CrisisMemory().memory_lenses()}
     except Exception as exc:
         return {"live": False, "source_type": "LOCAL DEMO FALLBACK", "lenses": {}, "error": str(exc)}
 
@@ -448,7 +448,7 @@ def api_memory():
 def health():
     return {
         "status": "ok", "project": "CrisisOps",
-        "hindsight_configured": bool(os.getenv("HINDSIGHT_BASE_URL")),
-        "hindsight_ready": hindsight_ready(),
+        "hindsight_configured": hindsight_configured(),
+        "hindsight_ready": hindsight_configured(),
         "memory_bank": "crisisops-disaster-response-memory",
     }
