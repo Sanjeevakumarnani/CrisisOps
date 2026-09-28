@@ -338,7 +338,6 @@ async def import_events(file: UploadFile = File(...)):
     content = (await file.read()).decode("utf-8")
     events, _errors = events_from_csv(content)
     for event_data in events:
-        event_data.source_type = "operator"
         event = create_event(event_data)
         try:
             await CrisisMemory().retain(event)
