@@ -34,7 +34,7 @@ The application can also explicitly retain the current public-feed snapshot. Thi
 A simplified version of the memory capture looks like this:
 
 ```python
-client.retain(
+await client.aretain(
     bank_id=BANK_ID,
     content=live_signal,
     context="live public hazard data",
@@ -44,7 +44,7 @@ client.retain(
 )
 ```
 
-Stable document IDs matter because the same source item should be updateable instead of creating uncontrolled duplicate memories.
+Stable document IDs matter because the same source item can be updated without creating uncontrolled duplicate memories. CrisisOps uses deterministic IDs for live signals and incident records.
 
 ## Before and after memory
 
