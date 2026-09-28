@@ -187,7 +187,6 @@ async function loadLiveData(){
 }
 
 async function retainLiveData(){
-  const button=document.querySelector('.live-card + .live-card');
   try{
     const r=await fetch('/api/live-data/retain?lat=17.385&lon=78.4867',{method:'POST'});const d=await r.json();
     showTrace(d.ok?'<span class="source-badge real">REAL</span><p>Retained '+esc(d.retained)+' public-intelligence memories in Hindsight.</p>':'<strong>Hindsight unavailable:</strong> '+esc(d.error||'Unknown error'));
