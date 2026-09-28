@@ -14,13 +14,44 @@ jobs:
           BASE_URL: https://crisisops-9541.onrender.com
         run: |
           set -euo pipefail
-          curl --fail --silent --show-error --max-time 30 "$BASE_URL/health"
-          curl --fail --silent --show-error --max-time 30 "$BASE_URL/api/live-data?lat=17.385&lon=78.4867"
-          curl --fail --silent --show-error --max-time 60 -X POST "$BASE_URL/api/demo/seed"
-          curl --fail --silent --show-error --max-time 120 -X POST "$BASE_URL/api/demo/verify-loop" > verify.json
+
+          echo "Waiting for Render deployment..."
+          for i in $(seq 1 20); do
+            if curl --fail --silent --show-error --max-time 20 "$BASE_URL/health" > health.json; then
+              break
+            fi
+            sleep 6
+          done
+          test -s health.json
+
           python - <<'PY'
           import json
-          with open("verify.json", "r", encoding="utf-8") as f:
+          with open("health.json", encoding="utf-8") as f:
+              data = json.load(f)
+          if not data.get("hindsight_configured"):
+              raise SystemExit("Hindsight credentials are not configured on Render")
+          print("Health OK:", data)
+          PY
+
+          echo "Checking live public intelligence..."
+          curl --silent --show-error --retry 4 --retry-delay 3 --retry-all-errors             --max-time 90 "$BASE_URL/api/live-data?lat=17.385&lon=78.4867" > live.json
+
+          python - <<'PY'
+          import json
+          with open("live.json", encoding="utf-8") as f:
+              data = json.load(f)
+          if "sources" not in data or "errors" not in data:
+              raise SystemExit("Live intelligence response is malformed")
+          print("Live intelligence OK. Sources:", data.get("sources"), "Errors:", data.get("errors"))
+          PY
+
+          echo "Seeding and proving Retain → Recall → Reflect..."
+          curl --fail --silent --show-error --retry 3 --retry-delay 3 --retry-all-errors             --max-time 120 -X POST "$BASE_URL/api/demo/seed" > seed.json
+          curl --fail --silent --show-error --retry 3 --retry-delay 3 --retry-all-errors             --max-time 180 -X POST "$BASE_URL/api/demo/verify-loop" > verify.json
+
+          python - <<'PY'
+          import json
+          with open("verify.json", encoding="utf-8") as f:
               data = json.load(f)
           if not data.get("hindsight_live"):
               raise SystemExit("Hindsight is not live on the deployed instance")
@@ -40,4 +71,25 @@ jobs:
               "latency_ms": data.get("latency_ms"),
               "demo_expectations": expected,
           }, indent=2))
+          PY
+
+          echo "Checking learning curve, side-by-side compare, and living memory..."
+          curl --fail --silent --show-error --retry 2 --retry-delay 3 --retry-all-errors             --max-time 240 -X POST "$BASE_URL/api/demo/learning-curve" > curve.json
+          curl --fail --silent --show-error --retry 2 --retry-delay 3 --retry-all-errors             --max-time 240 "$BASE_URL/api/analyze/compare?objective=Respond%20to%20North%20Ward%20flooding&locations=North%20Ward&resources=2%20boats%7C1%20truck&transport_plan=Use%20canal%20route&constraints=Bridge%204%20closed&proposed_actions=Stage%20boats" > compare.json
+          curl --fail --silent --show-error --retry 2 --retry-delay 3 --retry-all-errors             --max-time 240 "$BASE_URL/api/memory" > memory.json
+
+          python - <<'PY'
+          import json
+          curve=json.load(open("curve.json", encoding="utf-8"))
+          compare=json.load(open("compare.json", encoding="utf-8"))
+          memory=json.load(open("memory.json", encoding="utf-8"))
+          if not curve.get("hindsight_live"):
+              raise SystemExit("Learning-curve step did not use live Hindsight")
+          if not curve.get("third_retained_memory_id"):
+              raise SystemExit("Third learning incident was not retained")
+          if not compare.get("baseline") or not compare.get("analysis") or not compare.get("memory_live"):
+              raise SystemExit("Before/after compare is incomplete")
+          if not memory.get("live") or not memory.get("lenses"):
+              raise SystemExit("Living Memory lenses are not live")
+          print("Learning curve, compare, and Living Memory: OK")
           PY
