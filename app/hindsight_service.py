@@ -72,7 +72,7 @@ class CrisisMemory:
                 bank_id=BANK_ID,
                 content=event_to_memory(event),
                 context="humanitarian disaster-response operational report",
-                "timestamp=event.occurred_at,
+                timestamp=event.occurred_at,
                 document_id=document_id,
                 tags=[
                     f"kind:{event.kind}",
