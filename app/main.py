@@ -236,7 +236,7 @@ def analysis_page(request: Request):
 
 
 @app.post("/events")
-def add_event(
+async def add_event(
     kind: str = Form("situation"), title: str = Form(...), location: str = Form(...),
     lat: float = Form(...), lon: float = Form(...), urgency: str = Form("medium"),
     status: str = Form("open"), affected_people: int = Form(0), sector: str = Form("multi-sector"),
@@ -256,7 +256,7 @@ def add_event(
         outcome=outcome, source="field-report", source_type="operator",
     ))
     try:
-        CrisisMemory().retain(event)
+        await CrisisMemory().retain(event)
     except Exception:
         pass
     return RedirectResponse(url=f"/#event-{event.id}", status_code=303)
@@ -276,7 +276,7 @@ async def import_events(file: UploadFile = File(...)):
             event_data.source_type = "operator"
         event = create_event(event_data)
         if memory:
-            try: memory.retain(event)
+            try: await memory.retain(event)
             except Exception: pass
     return RedirectResponse(url="/", status_code=303)
 
