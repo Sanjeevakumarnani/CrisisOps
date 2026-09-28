@@ -97,6 +97,7 @@ def events_from_csv(text: str) -> tuple[list[OperationalEventCreate], list[str]]
                     attempted_actions=pipe_list(row.get("attempted_actions")),
                     outcome=(row.get("outcome") or "").strip(),
                     source=(row.get("source") or "csv").strip(),
+                    source_type=("synthetic" if (row.get("source_type") or "").strip().lower() == "synthetic" else "operator"),
                     occurred_at=occurred_at,
                 )
             )
