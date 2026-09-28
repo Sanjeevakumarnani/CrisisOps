@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import hashlib
 import os
 from functools import lru_cache
 from typing import Any
@@ -109,7 +110,11 @@ class CrisisMemory:
                 continue
             items = payload if isinstance(payload, list) else [payload]
             for idx, item in enumerate(items):
-                document_id = f"live-{provider}-{location.get('latitude')}-{location.get('longitude')}-{generated_at}-{idx}"
+                identity = item.get("id") or item.get("guid") or item.get("event_id") or item.get("observed_at") or f"item-{idx}"
+                digest = hashlib.sha256(
+                    f"{provider}|{location.get('latitude')}|{location.get('longitude')}|{identity}".encode("utf-8")
+                ).hexdigest()[:20]
+                document_id = f"live-{provider}-{digest}"
                 try:
                     await self.client.aretain(
                         bank_id=BANK_ID,
