@@ -1,0 +1,43 @@
+name: Live smoke test
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  smoke:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Test deployed CrisisOps
+        env:
+          BASE_URL: https://crisisops-9541.onrender.com
+        run: |
+          set -euo pipefail
+          curl --fail --silent --show-error --max-time 30 "$BASE_URL/health"
+          curl --fail --silent --show-error --max-time 30 "$BASE_URL/api/live-data?lat=17.385&lon=78.4867"
+          curl --fail --silent --show-error --max-time 60 -X POST "$BASE_URL/api/demo/seed"
+          curl --fail --silent --show-error --max-time 120 -X POST "$BASE_URL/api/demo/verify-loop" > verify.json
+          python - <<'PY'
+          import json
+          with open("verify.json", "r", encoding="utf-8") as f:
+              data = json.load(f)
+          if not data.get("hindsight_live"):
+              raise SystemExit("Hindsight is not live on the deployed instance")
+          expected = data.get("demo_expectations", {})
+          required = [
+              "road_delivery_failure_surface",
+              "canal_or_boat_route_surface",
+              "bridge_closure_surface",
+          ]
+          missing = [key for key in required if not expected.get(key)]
+          if missing:
+              raise SystemExit(f"Memory proof missing expected evidence: {missing}")
+          print(json.dumps({
+              "hindsight_live": True,
+              "retained_memory_id": data.get("retained_memory_id"),
+              "recalled_memory_ids": data.get("recalled_memory_ids"),
+              "latency_ms": data.get("latency_ms"),
+              "demo_expectations": expected,
+          }, indent=2))
+          PY
