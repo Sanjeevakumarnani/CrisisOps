@@ -1,5 +1,10 @@
 # CrisisOps — Disaster Response Memory Engine
 
+[![Live Demo](https://img.shields.io/badge/Live%20Demo-crisisops--9541.onrender.com-111827?style=flat-square)](https://crisisops-9541.onrender.com)
+[![Python](https://img.shields.io/badge/Python-3.10%2B-3776AB?style=flat-square&logo=python&logoColor=white)](https://www.python.org/)
+[![FastAPI](https://img.shields.io/badge/FastAPI-API-009688?style=flat-square&logo=fastapi&logoColor=white)](https://fastapi.tiangolo.com/)
+[![License](https://img.shields.io/badge/License-MIT-111827?style=flat-square)](LICENSE)
+
 [Architecture overview](docs/ARCHITECTURE.md) · [Portfolio](https://sanjeevakumarnani.github.io)
 
 CrisisOps is a persistent operational memory for emergency response. It turns field reports into a common operational picture, retains what happened, recalls relevant history before a response plan is chosen, and reflects on recurring patterns and constraints.
