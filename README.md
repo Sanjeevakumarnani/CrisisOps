@@ -1,5 +1,7 @@
 # CrisisOps — Disaster Response Memory Engine
 
+[Architecture overview](docs/ARCHITECTURE.md) · [Portfolio](https://sanjeevakumarnani.github.io)
+
 CrisisOps is a persistent operational memory for emergency response. It turns field reports into a common operational picture, retains what happened, recalls relevant history before a response plan is chosen, and reflects on recurring patterns and constraints.
 
 ## Core loop
